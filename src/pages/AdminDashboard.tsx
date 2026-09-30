@@ -3,8 +3,8 @@ import { store, BENCHMARK, THRESHOLD } from '../store';
 import { exportFacultyReport } from '../utils/excel';
 import ConfirmDialog from '../components/ConfirmDialog';
 import type { Faculty, EvaluationCycle, Criterion, AuditLogEntry, SubQuestion, TrainingRecommendation } from '../types';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { LayoutDashboard, Users, Calendar, ListChecks, ScrollText, Plus, Trash2, Search, AlertTriangle, CheckCircle, TrendingUp, Shield, FileSpreadsheet, GraduationCap, Edit3, Sparkles, Download, BarChart3 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
+import { LayoutDashboard, Users, Calendar, ListChecks, ScrollText, Plus, Trash2, Search, AlertTriangle, CheckCircle, TrendingUp, Shield, FileSpreadsheet, GraduationCap, Edit3, Sparkles, Download, BarChart3, MessageSquare, BookOpen } from 'lucide-react';
 
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
 
@@ -195,6 +195,85 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
           <div className="rounded-xl shadow-sm overflow-hidden" style={{ backgroundColor: '#EDEBE8' }}><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr style={{ backgroundColor: '#002366' }}><th className="text-left px-4 py-3 text-white font-medium">Name</th><th className="text-left px-4 py-3 text-white font-medium">Dept</th><th className="text-center px-4 py-3 text-white font-medium">Avg</th><th className="text-center px-4 py-3 text-white font-medium">Actions</th></tr></thead><tbody>{faculty.filter(f => f.name.toLowerCase().includes(searchQuery.toLowerCase())).map((f, i) => { const m = store.getFacultyMetrics(f.id, cycleId); const belowThreshold = m.totalSubmissions < THRESHOLD; return (<tr key={f.id} style={{ backgroundColor: i % 2 === 0 ? '#EDEBE8' : '#F8F6F1' }}><td className="px-4 py-3 font-medium">{f.name}</td><td className="px-4 py-3 text-xs" style={{ color: '#4B5563' }}>{f.department}</td><td className="px-4 py-3 text-center font-bold" style={{ color: belowThreshold ? '#9CA3AF' : m.overallAverage >= 4.5 ? '#2E8B57' : m.overallAverage < BENCHMARK ? '#C41E3A' : '#1A1A1A' }}>{belowThreshold ? '—' : m.overallAverage.toFixed(2)}</td><td className="px-4 py-3 text-center"><div className="flex items-center justify-center gap-1"><button onClick={() => setSelectedFaculty(f)} className="px-2 py-1 rounded text-xs font-medium text-white hover:opacity-80" style={{ backgroundColor: '#002366' }}>View</button><button onClick={() => exportFacultyReport(f.id, cycleId)} className="px-2 py-1 rounded text-xs text-white hover:opacity-80" style={{ backgroundColor: '#2E8B57' }}><FileSpreadsheet size={12} /></button></div></td></tr>); })}</tbody></table></div></div>
         </div>
       )}
+
+      {activeTab === 'faculty' && selectedFaculty && (() => {
+        const metrics = store.getFacultyMetrics(selectedFaculty.id, cycleId);
+        const criteriaBarData = criteria.map(c => ({ name: c.name, score: metrics.criteriaAverages[c.id] || 0 }));
+        const belowThreshold = metrics.totalSubmissions < THRESHOLD;
+        
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSelectedFaculty(null)} className="px-3 py-1.5 rounded-lg text-sm font-medium hover:opacity-90" style={{ backgroundColor: '#D5D8DC', color: '#1A1A1A' }}>← Back</button>
+                <div>
+                  <h2 className="text-xl font-bold" style={{ color: '#002366' }}>{selectedFaculty.name}</h2>
+                  <p className="text-sm" style={{ color: '#4B5563' }}>{selectedFaculty.title} • {selectedFaculty.department}</p>
+                </div>
+              </div>
+              <button onClick={() => exportFacultyReport(selectedFaculty.id, cycleId)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#2E8B57' }}>
+                <Download size={16} /> Export XLSX
+              </button>
+            </div>
+
+            {belowThreshold ? (
+              <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#F8F6F1', border: '2px dashed #B87333' }}>
+                <Shield size={48} className="mx-auto mb-3" style={{ color: '#B87333' }} />
+                <h3 className="text-lg font-semibold mb-2" style={{ color: '#002366' }}>Insufficient Data</h3>
+                <p className="text-sm" style={{ color: '#4B5563' }}>{THRESHOLD - metrics.totalSubmissions} more submissions needed to display metrics.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+                    <div className="flex items-center gap-2 mb-1"><MessageSquare size={16} style={{ color: '#B87333' }} /><span className="text-xs font-medium" style={{ color: '#4B5563' }}>Total Submissions</span></div>
+                    <p className="text-2xl font-bold" style={{ color: '#002366' }}>{metrics.totalSubmissions}</p>
+                  </div>
+                  <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+                    <div className="flex items-center gap-2 mb-1"><TrendingUp size={16} style={{ color: '#2E8B57' }} /><span className="text-xs font-medium" style={{ color: '#4B5563' }}>Overall Average</span></div>
+                    <p className="text-2xl font-bold" style={{ color: '#002366' }}>{metrics.overallAverage.toFixed(2)}</p>
+                    <p className="text-xs" style={{ color: '#4B5563' }}>out of 5.0</p>
+                  </div>
+                  <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+                    <div className="flex items-center gap-2 mb-1"><BookOpen size={16} style={{ color: '#002366' }} /><span className="text-xs font-medium" style={{ color: '#4B5563' }}>Courses Evaluated</span></div>
+                    <p className="text-2xl font-bold" style={{ color: '#002366' }}>{Object.keys(metrics.courseBreakdown).length}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+                  <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Criteria Performance</h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={criteriaBarData} layout="vertical" margin={{ left: 20 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#D5D8DC" />
+                      <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 11 }} />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
+                      <Tooltip />
+                      <ReferenceLine x={BENCHMARK} stroke="#C41E3A" strokeDasharray="5 5" />
+                      <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                        {criteriaBarData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.score >= BENCHMARK ? '#2E8B57' : '#C41E3A'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+                  <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Student Feedback</h3>
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {metrics.feedback.map((fb, i) => (
+                      <div key={i} className="p-3 rounded-lg text-sm" style={{ backgroundColor: '#F8F6F1' }}>
+                        <p>{fb.feedback}</p>
+                        <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{fb.courseId} • {new Date(fb.submittedAt).toLocaleDateString()}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {activeTab === 'cycles' && (
         <div className="space-y-6">
