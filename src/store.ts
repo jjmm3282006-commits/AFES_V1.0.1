@@ -67,6 +67,11 @@ const CRITERIA_SEED: Criterion[] = [
   { id: 'crit-workload', name: 'Workload', order: 5 },
 ];
 
+// Deterministic rating generator for consistent seed data
+function createDeterministicRatings(baseRatings: Record<string, number>): Record<string, number> {
+  return { ...baseRatings };
+}
+
 function generateSeedEvaluations(): Evaluation[] {
   const evals: Evaluation[] = [];
   const feedbacks = [
@@ -82,46 +87,108 @@ function generateSeedEvaluations(): Evaluation[] {
     'Very passionate about the subject matter.',
   ];
 
-  const genRatings = (min: number, max: number): Record<string, number> => {
-    const r: Record<string, number> = {};
-    SUB_QUESTIONS.forEach(sq => { r[sq.id] = Math.floor(Math.random() * (max - min + 1)) + min; });
-    return r;
+  // F001 - Dr. Sarah Chen - High performer (14 subs, avg ~4.5)
+  // Consistent high ratings across all criteria
+  const f001BaseRatings: Record<string, number> = {
+    'sq-clarity-1': 5, 'sq-clarity-2': 4, 'sq-clarity-3': 5,
+    'sq-pacing-1': 4, 'sq-pacing-2': 5, 'sq-pacing-3': 4,
+    'sq-engagement-1': 5, 'sq-engagement-2': 4, 'sq-engagement-3': 5,
+    'sq-assessment-1': 5, 'sq-assessment-2': 4, 'sq-assessment-3': 5,
+    'sq-workload-1': 4, 'sq-workload-2': 5, 'sq-workload-3': 4,
   };
-
-  // F001 - High performer (14 subs)
   for (let i = 0; i < 14; i++) {
-    evals.push({ id: uuidv4(), facultyId: 'F001', courseId: FACULTY_SEED[0].courses[i % 3], cycleId: 'cyc-001', ratings: genRatings(4, 5), feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2026, 2, 5 + i).toISOString() });
+    const ratings = createDeterministicRatings(f001BaseRatings);
+    // Add slight variation for realism
+    if (i % 3 === 0) { ratings['sq-pacing-1'] = 5; ratings['sq-workload-1'] = 5; }
+    evals.push({ id: uuidv4(), facultyId: 'F001', courseId: FACULTY_SEED[0].courses[i % 3], cycleId: 'cyc-001', ratings, feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2026, 2, 5 + i).toISOString() });
   }
-  // F002 - Mid performer with pacing issues (12 subs)
+
+  // F002 - Dr. James Wilson - Mid performer with pacing issues (12 subs, avg ~3.2)
+  // Good clarity and assessment, but poor pacing
+  const f002BaseRatings: Record<string, number> = {
+    'sq-clarity-1': 4, 'sq-clarity-2': 4, 'sq-clarity-3': 4,
+    'sq-pacing-1': 2, 'sq-pacing-2': 2, 'sq-pacing-3': 3, // Low pacing scores
+    'sq-engagement-1': 3, 'sq-engagement-2': 3, 'sq-engagement-3': 4,
+    'sq-assessment-1': 4, 'sq-assessment-2': 4, 'sq-assessment-3': 4,
+    'sq-workload-1': 3, 'sq-workload-2': 3, 'sq-workload-3': 3,
+  };
   for (let i = 0; i < 12; i++) {
-    const ratings = genRatings(3, 4);
-    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-pacing').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 2) + 2; });
+    const ratings = createDeterministicRatings(f002BaseRatings);
+    if (i % 4 === 0) { ratings['sq-engagement-3'] = 3; }
     evals.push({ id: uuidv4(), facultyId: 'F002', courseId: FACULTY_SEED[1].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 3) % feedbacks.length], submittedAt: new Date(2026, 2, 7 + i).toISOString() });
   }
-  // F003 - Low performer (11 subs)
+
+  // F003 - Dr. Maria Garcia - Low performer (11 subs, avg ~2.3)
+  // Poor engagement and assessment fairness
+  const f003BaseRatings: Record<string, number> = {
+    'sq-clarity-1': 3, 'sq-clarity-2': 2, 'sq-clarity-3': 3,
+    'sq-pacing-1': 2, 'sq-pacing-2': 3, 'sq-pacing-3': 2,
+    'sq-engagement-1': 1, 'sq-engagement-2': 2, 'sq-engagement-3': 1, // Very low engagement
+    'sq-assessment-1': 2, 'sq-assessment-2': 1, 'sq-assessment-3': 2, // Very low assessment
+    'sq-workload-1': 3, 'sq-workload-2': 2, 'sq-workload-3': 3,
+  };
   for (let i = 0; i < 11; i++) {
-    const ratings = genRatings(2, 3);
-    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-engagement' || sq.criterionId === 'crit-assessment').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 2) + 1; });
+    const ratings = createDeterministicRatings(f003BaseRatings);
+    if (i % 3 === 0) { ratings['sq-clarity-1'] = 2; ratings['sq-pacing-2'] = 2; }
     evals.push({ id: uuidv4(), facultyId: 'F003', courseId: FACULTY_SEED[2].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 5) % feedbacks.length], submittedAt: new Date(2026, 2, 10 + i).toISOString() });
   }
-  // F004 - Below threshold (7 subs)
+
+  // F004 - Dr. Robert Kim - Below threshold (7 subs, avg ~4.2)
+  // Good performer but not enough submissions
+  const f004BaseRatings: Record<string, number> = {
+    'sq-clarity-1': 4, 'sq-clarity-2': 5, 'sq-clarity-3': 4,
+    'sq-pacing-1': 4, 'sq-pacing-2': 4, 'sq-pacing-3': 5,
+    'sq-engagement-1': 4, 'sq-engagement-2': 4, 'sq-engagement-3': 4,
+    'sq-assessment-1': 5, 'sq-assessment-2': 4, 'sq-assessment-3': 5,
+    'sq-workload-1': 4, 'sq-workload-2': 4, 'sq-workload-3': 4,
+  };
   for (let i = 0; i < 7; i++) {
-    evals.push({ id: uuidv4(), facultyId: 'F004', courseId: 'MATH301', cycleId: 'cyc-001', ratings: genRatings(4, 5), feedback: feedbacks[(i + 7) % feedbacks.length], submittedAt: new Date(2026, 2, 12 + i).toISOString() });
+    const ratings = createDeterministicRatings(f004BaseRatings);
+    evals.push({ id: uuidv4(), facultyId: 'F004', courseId: 'MATH301', cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 7) % feedbacks.length], submittedAt: new Date(2026, 2, 12 + i).toISOString() });
   }
-  // F005 - Below threshold with workload issues (5 subs)
+
+  // F005 - Dr. Emily Thompson - Below threshold with workload issues (5 subs, avg ~3.0)
+  // Good overall but poor workload management
+  const f005BaseRatings: Record<string, number> = {
+    'sq-clarity-1': 4, 'sq-clarity-2': 3, 'sq-clarity-3': 4,
+    'sq-pacing-1': 3, 'sq-pacing-2': 3, 'sq-pacing-3': 3,
+    'sq-engagement-1': 3, 'sq-engagement-2': 4, 'sq-engagement-3': 3,
+    'sq-assessment-1': 3, 'sq-assessment-2': 3, 'sq-assessment-3': 4,
+    'sq-workload-1': 2, 'sq-workload-2': 2, 'sq-workload-3': 1, // Very low workload scores
+  };
   for (let i = 0; i < 5; i++) {
-    const ratings = genRatings(3, 4);
-    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-workload').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 2) + 2; });
+    const ratings = createDeterministicRatings(f005BaseRatings);
     evals.push({ id: uuidv4(), facultyId: 'F005', courseId: FACULTY_SEED[4].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 9) % feedbacks.length], submittedAt: new Date(2026, 2, 15 + i).toISOString() });
   }
-  // Completed cycle
+
+  // Completed cycle (cyc-003) - 8 evaluations
   for (let i = 0; i < 8; i++) {
-    evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[i % 5].id, courseId: FACULTY_SEED[i % 5].courses[0], cycleId: 'cyc-003', ratings: genRatings(3, 5), feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2025, 11, 5 + i).toISOString() });
+    const facultyIdx = i % 5;
+    const baseRatings: Record<string, number> = {
+      'sq-clarity-1': 4, 'sq-clarity-2': 3, 'sq-clarity-3': 4,
+      'sq-pacing-1': 3, 'sq-pacing-2': 4, 'sq-pacing-3': 3,
+      'sq-engagement-1': 4, 'sq-engagement-2': 3, 'sq-engagement-3': 4,
+      'sq-assessment-1': 3, 'sq-assessment-2': 4, 'sq-assessment-3': 3,
+      'sq-workload-1': 4, 'sq-workload-2': 3, 'sq-workload-3': 4,
+    };
+    const ratings = createDeterministicRatings(baseRatings);
+    evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[facultyIdx].id, courseId: FACULTY_SEED[facultyIdx].courses[0], cycleId: 'cyc-003', ratings, feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2025, 11, 5 + i).toISOString() });
   }
-  // Archived cycle
+
+  // Archived cycle (cyc-004) - 6 evaluations
   for (let i = 0; i < 6; i++) {
-    evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[i % 5].id, courseId: FACULTY_SEED[i % 5].courses[0], cycleId: 'cyc-004', ratings: genRatings(3, 4), feedback: feedbacks[(i + 2) % feedbacks.length], submittedAt: new Date(2025, 9, 5 + i).toISOString() });
+    const facultyIdx = i % 5;
+    const baseRatings: Record<string, number> = {
+      'sq-clarity-1': 3, 'sq-clarity-2': 4, 'sq-clarity-3': 3,
+      'sq-pacing-1': 4, 'sq-pacing-2': 3, 'sq-pacing-3': 4,
+      'sq-engagement-1': 3, 'sq-engagement-2': 4, 'sq-engagement-3': 3,
+      'sq-assessment-1': 4, 'sq-assessment-2': 3, 'sq-assessment-3': 4,
+      'sq-workload-1': 3, 'sq-workload-2': 4, 'sq-workload-3': 3,
+    };
+    const ratings = createDeterministicRatings(baseRatings);
+    evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[facultyIdx].id, courseId: FACULTY_SEED[facultyIdx].courses[0], cycleId: 'cyc-004', ratings, feedback: feedbacks[(i + 2) % feedbacks.length], submittedAt: new Date(2025, 9, 5 + i).toISOString() });
   }
+
   return evals;
 }
 
