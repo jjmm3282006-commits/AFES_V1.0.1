@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+@theme {
+  --color-royal: #002366;
+  --color-copper: #B87333;
+  --color-crimson: #C41E3A;
+  --color-stone: #EDEBE8;
+  --color-charcoal: #1A1A1A;
+  --color-slate-bg: #D5D8DC;
+  --color-emerald-ok: #2E8B57;
+  --color-cream: #F8F6F1;
+  --color-copper-tint: #F5E6D3;
+}
+
+body { background-color: #D5D8DC; color: #1A1A1A; font-family: system-ui, -apple-system, sans-serif; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #D5D8DC; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #9CA3AF; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #6B7280; }
+
+*:focus-visible { outline: 2px solid #002366; outline-offset: 2px; border-radius: 4px; }
+button, a, input, select, textarea { transition: all 0.2s ease; }
+
+@media print {
+  body { background: white !important; color: black !important; }
+  nav, footer, button, select, input, textarea { display: none !important; }
+  main { padding: 0 !important; max-width: 100% !important; }
+}
