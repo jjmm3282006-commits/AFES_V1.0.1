@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { RefreshCw, Shield, BarChart3, MessageSquare, TrendingUp, BookOpen, ChevronDown, ChevronUp, Award, Printer, CheckCircle, AlertTriangle, Download } from 'lucide-react';
 
 const COLORS = ['#002366', '#B87333', '#C41E3A', '#2E8B57', '#6366F1'];
-const STAR_COLORS = ['#C41E3A', '#B87333', '#D5D8DC', '#002366', '#2E8B57']; // 1★ to 5★
+const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
 
 interface FacultyDashboardProps { viewingCycleId?: string; }
 

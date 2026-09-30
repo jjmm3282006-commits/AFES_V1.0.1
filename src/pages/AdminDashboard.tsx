@@ -6,7 +6,7 @@ import type { Faculty, EvaluationCycle, Criterion, AuditLogEntry, SubQuestion, T
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { LayoutDashboard, Users, Calendar, ListChecks, ScrollText, Plus, Trash2, Search, AlertTriangle, CheckCircle, TrendingUp, Shield, FileSpreadsheet, GraduationCap, Edit3, Sparkles, Download, BarChart3 } from 'lucide-react';
 
-const STAR_COLORS = ['#C41E3A', '#B87333', '#D5D8DC', '#002366', '#2E8B57']; // 1★ to 5★
+const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
 
 type Tab = 'overview' | 'faculty' | 'cycles' | 'criteria' | 'tna' | 'audit';
 interface AdminDashboardProps { viewingCycleId?: string; }
@@ -138,6 +138,42 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
             <div className="flex items-center gap-4">
               <div className="relative"><ResponsiveContainer width={180} height={180}><PieChart><Pie data={institutionDonutData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={2}>{institutionDonutData.map((_, i) => (<Cell key={i} fill={STAR_COLORS[i]} />))}</Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: '#002366' }}>{institutionAvg.toFixed(1)}</span><span className="text-[10px]" style={{ color: '#4B5563' }}>avg score</span></div></div>
               <div className="flex-1 space-y-1.5">{institutionDonutData.map((d, i) => (<div key={i} className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: STAR_COLORS[i] }} /><span>{d.name}</span><span className="font-bold">{d.value}</span><span style={{ color: '#9CA3AF' }}>({d.percentage}%)</span></div>))}</div>
+            </div>
+          </div>
+          {/* Per-Criteria Pie Charts */}
+          <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+            <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: '#002366' }}><BarChart3 size={16} style={{ color: '#B87333' }} />Score Distribution by Criterion</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {criteria.map(criterion => {
+                // Calculate score distribution for this specific criterion across all faculty
+                const critEvals = allEvals;
+                const critDist = [0, 0, 0, 0, 0];
+                const subQuestions = store.getSubQuestionsForCriterion(criterion.id);
+                critEvals.forEach(ev => {
+                  subQuestions.forEach(sq => {
+                    const rating = ev.ratings[sq.id];
+                    if (rating && rating >= 1 && rating <= 5) critDist[rating - 1]++;
+                  });
+                });
+                const critTotal = critDist.reduce((a, b) => a + b, 0);
+                const critAvg = critTotal > 0 ? critDist.reduce((sum, count, idx) => sum + count * (idx + 1), 0) / critTotal : 0;
+                const critDonutData = [
+                  { name: '5★', value: critDist[4], percentage: critTotal > 0 ? ((critDist[4] / critTotal) * 100).toFixed(1) : '0' },
+                  { name: '4★', value: critDist[3], percentage: critTotal > 0 ? ((critDist[3] / critTotal) * 100).toFixed(1) : '0' },
+                  { name: '3★', value: critDist[2], percentage: critTotal > 0 ? ((critDist[2] / critTotal) * 100).toFixed(1) : '0' },
+                  { name: '2★', value: critDist[1], percentage: critTotal > 0 ? ((critDist[1] / critTotal) * 100).toFixed(1) : '0' },
+                  { name: '1★', value: critDist[0], percentage: critTotal > 0 ? ((critDist[0] / critTotal) * 100).toFixed(1) : '0' },
+                ];
+                return (
+                  <div key={criterion.id} className="rounded-lg p-3" style={{ backgroundColor: '#F8F6F1' }}>
+                    <h4 className="text-xs font-semibold mb-2 text-center" style={{ color: '#002366' }}>{criterion.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-shrink-0"><ResponsiveContainer width={100} height={100}><PieChart><Pie data={critDonutData} cx="50%" cy="50%" innerRadius={30} outerRadius={45} dataKey="value" paddingAngle={1}>{critDonutData.map((_, i) => (<Cell key={i} fill={STAR_COLORS[i]} />))}</Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-sm font-bold" style={{ color: '#002366' }}>{critAvg.toFixed(1)}</span></div></div>
+                      <div className="flex-1 space-y-0.5">{critDonutData.map((d, i) => d.value > 0 && (<div key={i} className="flex items-center gap-1 text-[10px]"><div className="w-2 h-2 rounded-sm" style={{ backgroundColor: STAR_COLORS[i] }} /><span>{d.name}</span><span className="font-bold">{d.value}</span></div>))}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
           {flaggedFaculty.length > 0 && (<div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#FEE2E2', border: '1px solid #C41E3A' }}><h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#C41E3A' }}><AlertTriangle size={16} />Below Benchmark (Average &lt; {BENCHMARK.toFixed(1)})</h3><div className="space-y-2">{flaggedFaculty.map(f => { const m = store.getFacultyMetrics(f.id, cycleId); return (<div key={f.id} className="flex items-center justify-between p-2 rounded-lg bg-white/50"><span className="text-sm">{f.name} ({f.department})</span><span className="text-sm font-bold" style={{ color: '#C41E3A' }}>{m.overallAverage.toFixed(2)}</span></div>); })}</div></div>)}
