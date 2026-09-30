@@ -12,6 +12,13 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
   const subQuestions = store.getSubQuestions();
 
   try {
+    if (!cycle) {
+      throw new Error('Evaluation cycle not found');
+    }
+    if (deptMetrics.totalSubmissions === 0) {
+      throw new Error('No evaluation data available for this department and period');
+    }
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'AFES';
     workbook.created = new Date();
@@ -87,7 +94,7 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
     let rowNum = 2;
     criteria.forEach(crit => {
       const critAvg = deptMetrics.criteriaAverages[crit.id] || 0;
-      const rating = critAvg >= 8 ? 'Excellent' : critAvg >= BENCHMARK ? 'Good' : critAvg >= 4 ? 'Needs Improvement' : 'Critical';
+      const rating = critAvg >= 4.5 ? 'Excellent' : critAvg >= BENCHMARK ? 'Good' : critAvg >= 2 ? 'Needs Improvement' : 'Critical';
       const r = subQuestionSheet.getRow(rowNum);
       r.values = [crit.name, 'CRITERION', critAvg.toFixed(2), rating];
       r.eachCell(cell => { cell.border = borderStyle; cell.font = { bold: true }; });
@@ -152,7 +159,8 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
     link.click();
     setTimeout(() => { document.body.removeChild(link); window.URL.revokeObjectURL(url); }, 200);
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     console.error('Error generating Dean report:', error);
-    alert('Failed to generate department report.');
+    alert(`Failed to generate department report: ${errorMessage}`);
   }
 }

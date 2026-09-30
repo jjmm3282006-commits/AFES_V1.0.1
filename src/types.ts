@@ -60,7 +60,7 @@ export interface Evaluation {
   facultyId: string;
   courseId: string;
   cycleId: string;
-  ratings: Record<string, number>; // subQuestionId -> rating (1-10)
+  ratings: Record<string, number>; // subQuestionId -> rating (1-5)
   feedback: string;
   submittedAt: string;
 }
@@ -86,7 +86,7 @@ export interface FacultyMetrics {
   overallAverage: number;
   criteriaAverages: Record<string, number>;
   subQuestionAverages: Record<string, number>;
-  scoreDistribution: number[]; // [1s, 2s, 3s, ..., 10s]
+  scoreDistribution: number[]; // [1s, 2s, 3s, 4s, 5s]
   feedback: Array<{ feedback: string; courseId: string; submittedAt: string }>;
   courseBreakdown: Record<string, { count: number; average: number }>;
 }

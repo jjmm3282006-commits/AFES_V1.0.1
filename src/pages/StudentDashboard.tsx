@@ -48,7 +48,16 @@ export default function StudentDashboard() {
 
   const handleRatingChange = (sqId: string, value: string) => {
     const rating = parseInt(value);
-    if (!isNaN(rating)) setRatings(prev => ({ ...prev, [sqId]: rating }));
+    if (!isNaN(rating) && rating >= 1 && rating <= 5) {
+      setRatings(prev => ({ ...prev, [sqId]: rating }));
+    } else if (value === '') {
+      // Allow clearing the rating
+      setRatings(prev => {
+        const newRatings = { ...prev };
+        delete newRatings[sqId];
+        return newRatings;
+      });
+    }
   };
 
   const allRated = subQuestions.every(sq => ratings[sq.id] !== undefined);

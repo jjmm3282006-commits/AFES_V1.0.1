@@ -14,6 +14,13 @@ export async function exportFacultyReport(facultyId: string, cycleId?: string): 
   const subQuestions = store.getSubQuestions();
 
   try {
+    if (!faculty) {
+      throw new Error('Faculty not found');
+    }
+    if (!metrics || metrics.totalSubmissions === 0) {
+      throw new Error('No evaluation data available for this period');
+    }
+
     const workbook = new ExcelJS.Workbook();
     workbook.creator = 'AFES';
     workbook.created = new Date();
@@ -91,10 +98,11 @@ export async function exportFacultyReport(facultyId: string, cycleId?: string): 
     const totalRatings = metrics.scoreDistribution.reduce((a, b) => a + b, 0);
     const summaryData = [
       ['Total Feedback Entries', metrics.feedback.length],
-      ['Score Distribution - 9-10 (Excellent)', `${metrics.scoreDistribution[8] + metrics.scoreDistribution[9]} (${totalRatings > 0 ? (((metrics.scoreDistribution[8] + metrics.scoreDistribution[9]) / totalRatings) * 100).toFixed(1) : 0}%)`],
-      ['Score Distribution - 6-8 (Good)', `${metrics.scoreDistribution[5] + metrics.scoreDistribution[6] + metrics.scoreDistribution[7]} (${totalRatings > 0 ? (((metrics.scoreDistribution[5] + metrics.scoreDistribution[6] + metrics.scoreDistribution[7]) / totalRatings) * 100).toFixed(1) : 0}%)`],
-      ['Score Distribution - 4-5 (Needs Improvement)', `${metrics.scoreDistribution[3] + metrics.scoreDistribution[4]} (${totalRatings > 0 ? (((metrics.scoreDistribution[3] + metrics.scoreDistribution[4]) / totalRatings) * 100).toFixed(1) : 0}%)`],
-      ['Score Distribution - 1-3 (Critical)', `${metrics.scoreDistribution[0] + metrics.scoreDistribution[1] + metrics.scoreDistribution[2]} (${totalRatings > 0 ? (((metrics.scoreDistribution[0] + metrics.scoreDistribution[1] + metrics.scoreDistribution[2]) / totalRatings) * 100).toFixed(1) : 0}%)`],
+      ['Score Distribution - 5★ (Excellent)', `${metrics.scoreDistribution[4]} (${totalRatings > 0 ? ((metrics.scoreDistribution[4] / totalRatings) * 100).toFixed(1) : 0}%)`],
+      ['Score Distribution - 4★ (Very Good)', `${metrics.scoreDistribution[3]} (${totalRatings > 0 ? ((metrics.scoreDistribution[3] / totalRatings) * 100).toFixed(1) : 0}%)`],
+      ['Score Distribution - 3★ (Good)', `${metrics.scoreDistribution[2]} (${totalRatings > 0 ? ((metrics.scoreDistribution[2] / totalRatings) * 100).toFixed(1) : 0}%)`],
+      ['Score Distribution - 2★ (Needs Improvement)', `${metrics.scoreDistribution[1]} (${totalRatings > 0 ? ((metrics.scoreDistribution[1] / totalRatings) * 100).toFixed(1) : 0}%)`],
+      ['Score Distribution - 1★ (Critical)', `${metrics.scoreDistribution[0]} (${totalRatings > 0 ? ((metrics.scoreDistribution[0] / totalRatings) * 100).toFixed(1) : 0}%)`],
     ];
     summaryData.forEach((row, i) => {
       const r = summarySheet.getRow(i + 2);
@@ -113,7 +121,8 @@ export async function exportFacultyReport(facultyId: string, cycleId?: string): 
     link.click();
     setTimeout(() => { document.body.removeChild(link); window.URL.revokeObjectURL(url); }, 200);
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
     console.error('Error generating Excel report:', error);
-    alert('Failed to generate Excel report.');
+    alert(`Failed to generate Excel report: ${errorMessage}`);
   }
 }
