@@ -41,7 +41,7 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
     setLoading(false);
   }, [courseFilter, cycleId, facultyId]);
 
-  useEffect(() => { loadData(); const unsubs = [store.subscribe('submission_added', loadData), store.subscribe('criteria_changed', loadData)]; return () => unsubs.forEach(u => u()); }, [loadData]);
+  useEffect(() => { loadData(); const unsubs = [store.subscribe('submission_added', loadData), store.subscribe('criteria_changed', loadData), store.subscribe('acknowledgment_changed', loadData), store.subscribe('cycle_changed', loadData)]; return () => unsubs.forEach(u => u()); }, [loadData]);
 
   const handleSignOff = async () => {
     if (signPassword !== 'faculty') return;

@@ -20,7 +20,7 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
   const deptMetrics = store.getDepartmentMetrics(department, cycleId);
   const acknowledged = faculty.filter(f => f.acknowledgmentStatus === 'acknowledged').length;
 
-  useEffect(() => { setCriteria(store.getCriteria()); const unsubs = [store.subscribe('submission_added', () => setCriteria(store.getCriteria())), store.subscribe('acknowledgment_changed', () => setCriteria(store.getCriteria()))]; return () => unsubs.forEach(u => u()); }, []);
+  useEffect(() => { setCriteria(store.getCriteria()); const unsubs = [store.subscribe('submission_added', () => setCriteria(store.getCriteria())), store.subscribe('acknowledgment_changed', () => setCriteria(store.getCriteria())), store.subscribe('criteria_changed', () => setCriteria(store.getCriteria())), store.subscribe('cycle_changed', () => setCriteria(store.getCriteria()))]; return () => unsubs.forEach(u => u()); }, []);
 
   const institutionCriteriaData = criteria.map(c => {
     let totalScore = 0, totalCount = 0;
