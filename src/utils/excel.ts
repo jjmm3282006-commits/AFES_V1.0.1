@@ -32,7 +32,7 @@ export async function exportFacultyReport(facultyId: string, cycleId?: string): 
     coverSheet.getRow(5).values = ['Title', faculty.title];
     coverSheet.getRow(6).values = ['Evaluation Period', cycle?.displayName || 'N/A'];
     coverSheet.getRow(7).values = ['Total Submissions', metrics.totalSubmissions];
-    coverSheet.getRow(8).values = ['Overall Average', `${metrics.overallAverage.toFixed(2)} / 10.00`];
+    coverSheet.getRow(8).values = ['Overall Average', `${metrics.overallAverage.toFixed(2)} / 5.00`];
     coverSheet.getRow(9).values = ['Acknowledgment Status', faculty.acknowledgmentStatus];
     [3, 4, 5, 6, 7, 8, 9].forEach(r => { coverSheet.getRow(r).eachCell(cell => { cell.border = borderStyle; }); });
 
@@ -45,7 +45,7 @@ export async function exportFacultyReport(facultyId: string, cycleId?: string): 
     let rowNum = 2;
     criteria.forEach(crit => {
       const critAvg = metrics.criteriaAverages[crit.id] || 0;
-      const rating = critAvg >= 8 ? 'Excellent' : critAvg >= BENCHMARK ? 'Good' : critAvg >= 4 ? 'Needs Improvement' : 'Critical';
+      const rating = critAvg >= 4.5 ? 'Excellent' : critAvg >= BENCHMARK ? 'Good' : critAvg >= 2 ? 'Needs Improvement' : 'Critical';
       const r = criteriaSheet.getRow(rowNum);
       r.values = [crit.name, 'CRITERION', critAvg.toFixed(2), rating];
       r.eachCell(cell => { cell.border = borderStyle; cell.font = { bold: true }; });
@@ -53,7 +53,7 @@ export async function exportFacultyReport(facultyId: string, cycleId?: string): 
       const critSQs = subQuestions.filter(sq => sq.criterionId === crit.id);
       critSQs.forEach(sq => {
         const sqAvg = metrics.subQuestionAverages[sq.id] || 0;
-        const sqRating = sqAvg >= 8 ? 'Excellent' : sqAvg >= BENCHMARK ? 'Good' : sqAvg >= 4 ? 'Needs Improvement' : 'Critical';
+        const sqRating = sqAvg >= 4.5 ? 'Excellent' : sqAvg >= BENCHMARK ? 'Good' : sqAvg >= 2 ? 'Needs Improvement' : 'Critical';
         const sr = criteriaSheet.getRow(rowNum);
         sr.values = [`  → ${sq.text}`, 'Sub-Question', sqAvg.toFixed(2), sqRating];
         sr.eachCell(cell => { cell.border = borderStyle; });

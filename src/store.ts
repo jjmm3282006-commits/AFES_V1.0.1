@@ -89,37 +89,37 @@ function generateSeedEvaluations(): Evaluation[] {
 
   // F001 - High performer (14 subs)
   for (let i = 0; i < 14; i++) {
-    evals.push({ id: uuidv4(), facultyId: 'F001', courseId: FACULTY_SEED[0].courses[i % 3], cycleId: 'cyc-001', ratings: genRatings(7, 10), feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2026, 2, 5 + i).toISOString() });
+    evals.push({ id: uuidv4(), facultyId: 'F001', courseId: FACULTY_SEED[0].courses[i % 3], cycleId: 'cyc-001', ratings: genRatings(4, 5), feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2026, 2, 5 + i).toISOString() });
   }
   // F002 - Mid performer with pacing issues (12 subs)
   for (let i = 0; i < 12; i++) {
-    const ratings = genRatings(5, 8);
-    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-pacing').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 3) + 3; });
+    const ratings = genRatings(3, 4);
+    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-pacing').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 2) + 2; });
     evals.push({ id: uuidv4(), facultyId: 'F002', courseId: FACULTY_SEED[1].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 3) % feedbacks.length], submittedAt: new Date(2026, 2, 7 + i).toISOString() });
   }
   // F003 - Low performer (11 subs)
   for (let i = 0; i < 11; i++) {
-    const ratings = genRatings(3, 7);
-    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-engagement' || sq.criterionId === 'crit-assessment').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 3) + 2; });
+    const ratings = genRatings(2, 3);
+    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-engagement' || sq.criterionId === 'crit-assessment').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 2) + 1; });
     evals.push({ id: uuidv4(), facultyId: 'F003', courseId: FACULTY_SEED[2].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 5) % feedbacks.length], submittedAt: new Date(2026, 2, 10 + i).toISOString() });
   }
   // F004 - Below threshold (7 subs)
   for (let i = 0; i < 7; i++) {
-    evals.push({ id: uuidv4(), facultyId: 'F004', courseId: 'MATH301', cycleId: 'cyc-001', ratings: genRatings(7, 10), feedback: feedbacks[(i + 7) % feedbacks.length], submittedAt: new Date(2026, 2, 12 + i).toISOString() });
+    evals.push({ id: uuidv4(), facultyId: 'F004', courseId: 'MATH301', cycleId: 'cyc-001', ratings: genRatings(4, 5), feedback: feedbacks[(i + 7) % feedbacks.length], submittedAt: new Date(2026, 2, 12 + i).toISOString() });
   }
   // F005 - Below threshold with workload issues (5 subs)
   for (let i = 0; i < 5; i++) {
-    const ratings = genRatings(5, 8);
-    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-workload').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 3) + 3; });
+    const ratings = genRatings(3, 4);
+    SUB_QUESTIONS.filter(sq => sq.criterionId === 'crit-workload').forEach(sq => { ratings[sq.id] = Math.floor(Math.random() * 2) + 2; });
     evals.push({ id: uuidv4(), facultyId: 'F005', courseId: FACULTY_SEED[4].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 9) % feedbacks.length], submittedAt: new Date(2026, 2, 15 + i).toISOString() });
   }
   // Completed cycle
   for (let i = 0; i < 8; i++) {
-    evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[i % 5].id, courseId: FACULTY_SEED[i % 5].courses[0], cycleId: 'cyc-003', ratings: genRatings(5, 10), feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2025, 11, 5 + i).toISOString() });
+    evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[i % 5].id, courseId: FACULTY_SEED[i % 5].courses[0], cycleId: 'cyc-003', ratings: genRatings(3, 5), feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2025, 11, 5 + i).toISOString() });
   }
   // Archived cycle
   for (let i = 0; i < 6; i++) {
-    evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[i % 5].id, courseId: FACULTY_SEED[i % 5].courses[0], cycleId: 'cyc-004', ratings: genRatings(5, 9), feedback: feedbacks[(i + 2) % feedbacks.length], submittedAt: new Date(2025, 9, 5 + i).toISOString() });
+    evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[i % 5].id, courseId: FACULTY_SEED[i % 5].courses[0], cycleId: 'cyc-004', ratings: genRatings(3, 4), feedback: feedbacks[(i + 2) % feedbacks.length], submittedAt: new Date(2025, 9, 5 + i).toISOString() });
   }
   return evals;
 }
@@ -138,41 +138,41 @@ function generateTrainingRecommendation(facultyName: string, lowCriteria: { name
         if (lowSQs.some(sq => sq.text.includes('clear and understandable'))) ca.push('• Break down complex concepts into smaller segments with real-world examples');
         if (lowSQs.some(sq => sq.text.includes('appropriate language'))) ca.push('• Define technical terms when first introduced and provide a glossary');
         if (lowSQs.some(sq => sq.text.includes('clear instructions'))) ca.push('• Provide written assignment guidelines with rubrics and exemplars');
-        recommendations.push(`**Clarity (${score}/10)**\nStudents report difficulty understanding course material. This suggests content may be presented too abstractly.\n\nRecommended actions:\n${ca.join('\n')}\n\nWhy this matters: When students cannot follow explanations, they cannot engage meaningfully with the material.`);
+        recommendations.push(`**Clarity (${score}/5)**\nStudents report difficulty understanding course material. This suggests content may be presented too abstractly.\n\nRecommended actions:\n${ca.join('\n')}\n\nWhy this matters: When students cannot follow explanations, they cannot engage meaningfully with the material.`);
         break;
       case 'pacing':
         const pa: string[] = [];
         if (lowSQs.some(sq => sq.text.includes('appropriate speed'))) pa.push('• Allocate specific time blocks for each topic and use a timer');
         if (lowSQs.some(sq => sq.text.includes('time for questions'))) pa.push('• Build in 5-minute pauses every 20 minutes for questions');
         if (lowSQs.some(sq => sq.text.includes('theory and practical'))) pa.push('• Alternate between theoretical explanation and hands-on application');
-        recommendations.push(`**Pacing (${score}/10)**\nStudents feel the course moves too quickly or too slowly.\n\nRecommended actions:\n${pa.join('\n')}\n\nWhy this matters: Poor pacing reduces learning outcomes and student engagement.`);
+        recommendations.push(`**Pacing (${score}/5)**\nStudents feel the course moves too quickly or too slowly.\n\nRecommended actions:\n${pa.join('\n')}\n\nWhy this matters: Poor pacing reduces learning outcomes and student engagement.`);
         break;
       case 'engagement':
         const ea: string[] = [];
         if (lowSQs.some(sq => sq.text.includes('interactive'))) ea.push('• Replace 10 minutes of lecture with active learning activities');
         if (lowSQs.some(sq => sq.text.includes('participation'))) ea.push('• Use think-pair-share techniques to encourage participation');
         if (lowSQs.some(sq => sq.text.includes('varied teaching'))) ea.push('• Incorporate case studies, group work, and multimedia');
-        recommendations.push(`**Engagement (${score}/10)**\nStudents report the learning environment feels passive.\n\nRecommended actions:\n${ea.join('\n')}\n\nWhy this matters: Passive learning leads to lower retention and motivation.`);
+        recommendations.push(`**Engagement (${score}/5)**\nStudents report the learning environment feels passive.\n\nRecommended actions:\n${ea.join('\n')}\n\nWhy this matters: Passive learning leads to lower retention and motivation.`);
         break;
       case 'assessment fairness':
         const aa: string[] = [];
         if (lowSQs.some(sq => sq.text.includes('learning objectives'))) aa.push('• Map each assessment to specific learning objectives and share with students');
         if (lowSQs.some(sq => sq.text.includes('transparent'))) aa.push('• Provide detailed rubrics before assignments');
         if (lowSQs.some(sq => sq.text.includes('timely feedback'))) aa.push('• Return graded work within 1 week with specific comments');
-        recommendations.push(`**Assessment Fairness (${score}/10)**\nStudents perceive assessments as misaligned or grading as inconsistent.\n\nRecommended actions:\n${aa.join('\n')}\n\nWhy this matters: Unclear evaluation undermines trust and focuses students on gaming the system.`);
+        recommendations.push(`**Assessment Fairness (${score}/5)**\nStudents perceive assessments as misaligned or grading as inconsistent.\n\nRecommended actions:\n${aa.join('\n')}\n\nWhy this matters: Unclear evaluation undermines trust and focuses students on gaming the system.`);
         break;
       case 'workload':
         const wa: string[] = [];
         if (lowSQs.some(sq => sq.text.includes('reasonable'))) wa.push('• Audit assignment scope: ensure 2-3 hours of work per credit hour per week');
         if (lowSQs.some(sq => sq.text.includes('deadlines'))) wa.push('• Stagger major deadlines across the semester');
         if (lowSQs.some(sq => sq.text.includes('balance'))) wa.push('• Coordinate with other instructors to distribute workload evenly');
-        recommendations.push(`**Workload (${score}/10)**\nStudents report course demands exceed reasonable expectations.\n\nRecommended actions:\n${wa.join('\n')}\n\nWhy this matters: Excessive workload forces surface-level learning over deep comprehension.`);
+        recommendations.push(`**Workload (${score}/5)**\nStudents report course demands exceed reasonable expectations.\n\nRecommended actions:\n${wa.join('\n')}\n\nWhy this matters: Excessive workload forces surface-level learning over deep comprehension.`);
         break;
       default:
-        recommendations.push(`**${name} (${score}/10)**\nThis area scored below benchmark. Review sub-question feedback to identify patterns.`);
+        recommendations.push(`**${name} (${score}/5)**\nThis area scored below benchmark. Review sub-question feedback to identify patterns.`);
     }
   });
-  return `**Survey Analysis for ${facultyName}**\n\nThe following areas scored below the ${BENCHMARK}/10 benchmark. Actions are prioritized by severity.\n\n${recommendations.join('\n\n---\n\n')}`;
+  return `**Survey Analysis for ${facultyName}**\n\nThe following areas scored below the ${BENCHMARK}/5 benchmark. Actions are prioritized by severity.\n\n${recommendations.join('\n\n---\n\n')}`;
 }
 
 class DataStore {
@@ -412,7 +412,7 @@ class DataStore {
     if (fac && fac.acknowledgmentStatus === 'acknowledged') { fac.acknowledgmentStatus = 'pending_acknowledgment'; this.emit('acknowledgment_changed'); }
     const vals = Object.values(evalData.ratings);
     const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-    this.addAuditLog('student:anonymous', 'submission', evalData.facultyId, `Faculty: "${fac?.name}", Course: ${evalData.courseId}, Avg: ${avg.toFixed(2)}/10`);
+    this.addAuditLog('student:anonymous', 'submission', evalData.facultyId, `Faculty: "${fac?.name}", Course: ${evalData.courseId}, Avg: ${avg.toFixed(2)}/5`);
     this.emit('submission_added');
     return evaluation;
   }

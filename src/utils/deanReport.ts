@@ -29,7 +29,7 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
     overviewSheet.getRow(4).values = ['Evaluation Period', cycle?.displayName || 'N/A'];
     overviewSheet.getRow(5).values = ['Total Faculty', deptMetrics.totalFaculty];
     overviewSheet.getRow(6).values = ['Total Submissions', deptMetrics.totalSubmissions];
-    overviewSheet.getRow(7).values = ['Department Average', `${deptMetrics.institutionAverage.toFixed(2)} / 10.00`];
+    overviewSheet.getRow(7).values = ['Department Average', `${deptMetrics.institutionAverage.toFixed(2)} / 5.00`];
     overviewSheet.getRow(8).values = ['Report Generated', new Date().toLocaleString()];
     [3, 4, 5, 6, 7, 8].forEach(r => { overviewSheet.getRow(r).eachCell(cell => { cell.border = borderStyle; }); });
 
@@ -48,7 +48,7 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
     faculty.forEach((f, i) => {
       const metrics = store.getFacultyMetrics(f.id, effectiveCycleId);
       const belowThreshold = metrics.totalSubmissions < THRESHOLD;
-      const status = belowThreshold ? 'Insufficient Data' : metrics.overallAverage >= 8 ? 'Excellent' : metrics.overallAverage >= BENCHMARK ? 'Good' : 'Below Benchmark';
+      const status = belowThreshold ? 'Insufficient Data' : metrics.overallAverage >= 4.5 ? 'Excellent' : metrics.overallAverage >= BENCHMARK ? 'Good' : 'Below Benchmark';
       const rowNum = i + 2;
       const row = facultySheet.getRow(rowNum);
       row.values = [
@@ -70,7 +70,7 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
 
     criteria.forEach((crit, i) => {
       const critAvg = deptMetrics.criteriaAverages[crit.id] || 0;
-      const rating = critAvg >= 8 ? 'Excellent' : critAvg >= BENCHMARK ? 'Good' : critAvg >= 4 ? 'Needs Improvement' : 'Critical';
+      const rating = critAvg >= 4.5 ? 'Excellent' : critAvg >= BENCHMARK ? 'Good' : critAvg >= 2 ? 'Needs Improvement' : 'Critical';
       const rowNum = i + 2;
       const row = criteriaSheet.getRow(rowNum);
       row.values = [crit.name, critAvg.toFixed(2), rating];
@@ -106,7 +106,7 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
           });
         });
         const sqAvg = sqTotals[sq.id] ? sqTotals[sq.id].total / sqTotals[sq.id].count : 0;
-        const sqRating = sqAvg >= 8 ? 'Excellent' : sqAvg >= BENCHMARK ? 'Good' : sqAvg >= 4 ? 'Needs Improvement' : 'Critical';
+        const sqRating = sqAvg >= 4.5 ? 'Excellent' : sqAvg >= BENCHMARK ? 'Good' : sqAvg >= 2 ? 'Needs Improvement' : 'Critical';
         const sr = subQuestionSheet.getRow(rowNum);
         sr.values = [`  → ${sq.text}`, 'Sub-Question', sqAvg.toFixed(2), sqRating];
         sr.eachCell(cell => { cell.border = borderStyle; });
