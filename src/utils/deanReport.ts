@@ -147,6 +147,112 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
       if (i % 2 === 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F6F1' } }; });
     });
 
+    // Sheet 6: Course-Level Performance
+    const courseSheet = workbook.addWorksheet('Course Performance');
+    courseSheet.columns = [{ width: 20 }, { width: 15 }, { width: 15 }];
+    courseSheet.getRow(1).values = ['Course', 'Submissions', 'Average'];
+    courseSheet.getRow(1).eachCell(cell => { cell.fill = headerFill; cell.font = headerFont; cell.border = borderStyle; });
+
+    const deptEvals = store.getEvaluationsForDepartment(department, effectiveCycleId);
+    const courseMetrics: Record<string, { facultyId: string; submissions: number; totalScore: number }> = {};
+    deptEvals.forEach(ev => {
+      if (!courseMetrics[ev.courseId]) {
+        courseMetrics[ev.courseId] = { facultyId: ev.facultyId, submissions: 0, totalScore: 0 };
+      }
+      courseMetrics[ev.courseId].submissions++;
+      const ratings = Object.values(ev.ratings);
+      courseMetrics[ev.courseId].totalScore += ratings.reduce((a, b) => a + b, 0) / ratings.length;
+    });
+
+    const courseData = Object.entries(courseMetrics).map(([courseId, data]) => ({
+      courseId,
+      submissions: data.submissions,
+      average: data.submissions > 0 ? data.totalScore / data.submissions : 0,
+    }));
+
+    courseData.forEach((course, i) => {
+      const rowNum = i + 2;
+      const row = courseSheet.getRow(rowNum);
+      row.values = [course.courseId, course.submissions, course.average.toFixed(2)];
+      row.eachCell(cell => { cell.border = borderStyle; });
+      if (i % 2 === 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F6F1' } }; });
+    });
+
+    // Sheet 7: Department Strengths & Improvements
+    const analysisSheet = workbook.addWorksheet('Strengths & Improvements');
+    analysisSheet.columns = [{ width: 30 }, { width: 15 }, { width: 20 }];
+    
+    // Strengths section
+    analysisSheet.getRow(1).values = ['DEPARTMENT STRENGTHS (≥4.0)', '', ''];
+    analysisSheet.getRow(1).eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E8B57' } }; cell.font = { ...headerFont, color: { argb: 'FFFFFFFF' } }; cell.border = borderStyle; });
+    
+    const strengths = criteria.map(c => ({
+      name: c.name,
+      average: deptMetrics.criteriaAverages[c.id] || 0,
+    })).filter(c => c.average >= 4.0).sort((a, b) => b.average - a.average);
+
+    let analysisRowNum = 2;
+    strengths.forEach((s, i) => {
+      const row = analysisSheet.getRow(analysisRowNum);
+      row.values = [s.name, s.average.toFixed(2), s.average >= 4.5 ? 'Excellent' : 'Very Good'];
+      row.eachCell(cell => { cell.border = borderStyle; });
+      if (i % 2 === 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } }; });
+      analysisRowNum++;
+    });
+
+    // Improvements section
+    analysisRowNum++;
+    analysisSheet.getRow(analysisRowNum).values = ['AREAS FOR IMPROVEMENT (<3.0)', '', ''];
+    analysisSheet.getRow(analysisRowNum).eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC41E3A' } }; cell.font = { ...headerFont, color: { argb: 'FFFFFFFF' } }; cell.border = borderStyle; });
+    analysisRowNum++;
+
+    const improvements = criteria.map(c => ({
+      name: c.name,
+      average: deptMetrics.criteriaAverages[c.id] || 0,
+    })).filter(c => c.average < BENCHMARK && c.average > 0).sort((a, b) => a.average - b.average);
+
+    improvements.forEach((imp, i) => {
+      const row = analysisSheet.getRow(analysisRowNum);
+      row.values = [imp.name, imp.average.toFixed(2), imp.average >= 2 ? 'Needs Improvement' : 'Critical'];
+      row.eachCell(cell => { cell.border = borderStyle; });
+      if (i % 2 === 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; });
+      analysisRowNum++;
+    });
+
+    // Sheet 8: Feedback Sentiment Analysis
+    const sentimentSheet = workbook.addWorksheet('Feedback Sentiment');
+    sentimentSheet.columns = [{ width: 30 }, { width: 15 }];
+    sentimentSheet.getRow(1).values = ['Metric', 'Value'];
+    sentimentSheet.getRow(1).eachCell(cell => { cell.fill = headerFill; cell.font = headerFont; cell.border = borderStyle; });
+
+    const allFeedback = deptEvals.map(e => e.feedback).filter(f => f && f.trim().length > 0);
+    const positiveKeywords = ['excellent', 'great', 'good', 'clear', 'engaging', 'helpful', 'organized', 'fair'];
+    const negativeKeywords = ['confusing', 'difficult', 'unclear', 'slow', 'fast', 'hard', 'unfair', 'disorganized'];
+    
+    let positiveCount = 0;
+    let negativeCount = 0;
+    
+    allFeedback.forEach(feedback => {
+      const lower = feedback.toLowerCase();
+      if (positiveKeywords.some(kw => lower.includes(kw))) positiveCount++;
+      if (negativeKeywords.some(kw => lower.includes(kw))) negativeCount++;
+    });
+
+    const sentimentData = [
+      ['Total Feedback Entries', allFeedback.length],
+      ['Positive Feedback', positiveCount],
+      ['Needs Attention', negativeCount],
+      ['Sentiment Ratio', `${allFeedback.length > 0 ? ((positiveCount / allFeedback.length) * 100).toFixed(1) : 0}%`],
+    ];
+
+    sentimentData.forEach((data, i) => {
+      const rowNum = i + 2;
+      const row = sentimentSheet.getRow(rowNum);
+      row.values = data;
+      row.eachCell(cell => { cell.border = borderStyle; });
+      if (i % 2 === 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F6F1' } }; });
+    });
+
     // Generate and download
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
