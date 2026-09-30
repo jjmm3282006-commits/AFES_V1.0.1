@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { BarChart3, Users, TrendingUp, Shield, Award, CheckCircle, Download } from 'lucide-react';
 
 const COLORS = ['#002366', '#B87333', '#C41E3A', '#2E8B57', '#6366F1'];
-const PIE_COLORS = ['#2E8B57', '#002366', '#B87333', '#C41E3A'];
+const STAR_COLORS = ['#C41E3A', '#B87333', '#D5D8DC', '#002366', '#2E8B57']; // 1★ to 5★
 interface DeanDashboardProps { viewingCycleId?: string; }
 
 export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
@@ -53,10 +53,10 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
 
   // Calculate department score distribution
   const deptEvals = store.getEvaluationsForDepartment(department, cycleId);
-  const deptScoreDist = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const deptScoreDist = [0, 0, 0, 0, 0];
   deptEvals.forEach(ev => {
     Object.values(ev.ratings).forEach(rating => {
-      if (rating >= 1 && rating <= 10) deptScoreDist[rating - 1]++;
+      if (rating >= 1 && rating <= 5) deptScoreDist[rating - 1]++;
     });
   });
   const deptTotalRatings = deptScoreDist.reduce((a, b) => a + b, 0);
@@ -64,10 +64,11 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
     ? deptScoreDist.reduce((sum, count, idx) => sum + count * (idx + 1), 0) / deptTotalRatings 
     : 0;
   const deptDonutData = [
-    { name: '9-10', value: deptScoreDist[8] + deptScoreDist[9], percentage: deptTotalRatings > 0 ? (((deptScoreDist[8] + deptScoreDist[9]) / deptTotalRatings) * 100).toFixed(1) : '0' },
-    { name: '6-8', value: deptScoreDist[5] + deptScoreDist[6] + deptScoreDist[7], percentage: deptTotalRatings > 0 ? (((deptScoreDist[5] + deptScoreDist[6] + deptScoreDist[7]) / deptTotalRatings) * 100).toFixed(1) : '0' },
-    { name: '4-5', value: deptScoreDist[3] + deptScoreDist[4], percentage: deptTotalRatings > 0 ? (((deptScoreDist[3] + deptScoreDist[4]) / deptTotalRatings) * 100).toFixed(1) : '0' },
-    { name: '1-3', value: deptScoreDist[0] + deptScoreDist[1] + deptScoreDist[2], percentage: deptTotalRatings > 0 ? (((deptScoreDist[0] + deptScoreDist[1] + deptScoreDist[2]) / deptTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '5★', value: deptScoreDist[4], percentage: deptTotalRatings > 0 ? ((deptScoreDist[4] / deptTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '4★', value: deptScoreDist[3], percentage: deptTotalRatings > 0 ? ((deptScoreDist[3] / deptTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '3★', value: deptScoreDist[2], percentage: deptTotalRatings > 0 ? ((deptScoreDist[2] / deptTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '2★', value: deptScoreDist[1], percentage: deptTotalRatings > 0 ? ((deptScoreDist[1] / deptTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '1★', value: deptScoreDist[0], percentage: deptTotalRatings > 0 ? ((deptScoreDist[0] / deptTotalRatings) * 100).toFixed(1) : '0' },
   ];
 
   return (
@@ -94,15 +95,15 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
           </ResponsiveContainer>
         </div>
         <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><BarChart3 size={16} style={{ color: '#B87333' }} />Institution Criteria Performance (avg / 10.0)</h3>
-          <ResponsiveContainer width="100%" height={220}><BarChart data={institutionCriteriaData} layout="vertical" margin={{ left: 20 }}><CartesianGrid strokeDasharray="3 3" stroke="#D5D8DC" /><XAxis type="number" domain={[0, 10]} tick={{ fontSize: 11 }} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#1A1A1A' }} width={100} /><Tooltip contentStyle={{ backgroundColor: '#EDEBE8', border: '1px solid #D5D8DC', borderRadius: '8px' }} /><ReferenceLine x={BENCHMARK} stroke="#C41E3A" strokeDasharray="5 5" strokeWidth={2} /><Bar dataKey="score" radius={[0, 4, 4, 0]}>{institutionCriteriaData.map((entry, i) => (<Cell key={i} fill={entry.score >= BENCHMARK ? '#2E8B57' : '#C41E3A'} />))}</Bar></BarChart></ResponsiveContainer>
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><BarChart3 size={16} style={{ color: '#B87333' }} />Institution Criteria Performance (avg / 5.0)</h3>
+          <ResponsiveContainer width="100%" height={220}><BarChart data={institutionCriteriaData} layout="vertical" margin={{ left: 20 }}><CartesianGrid strokeDasharray="3 3" stroke="#D5D8DC" /><XAxis type="number" domain={[0, 5]} tick={{ fontSize: 11 }} /><YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#1A1A1A' }} width={100} /><Tooltip contentStyle={{ backgroundColor: '#EDEBE8', border: '1px solid #D5D8DC', borderRadius: '8px' }} /><ReferenceLine x={BENCHMARK} stroke="#C41E3A" strokeDasharray="5 5" strokeWidth={2} /><Bar dataKey="score" radius={[0, 4, 4, 0]}>{institutionCriteriaData.map((entry, i) => (<Cell key={i} fill={entry.score >= BENCHMARK ? '#2E8B57' : '#C41E3A'} />))}</Bar></BarChart></ResponsiveContainer>
         </div>
       </div>
       <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><BarChart3 size={16} style={{ color: '#B87333' }} />Department Score Distribution</h3>
         <div className="flex items-center gap-4">
-          <div className="relative"><ResponsiveContainer width={180} height={180}><PieChart><Pie data={deptDonutData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={2}>{deptDonutData.map((_, i) => (<Cell key={i} fill={PIE_COLORS[i]} />))}</Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: '#002366' }}>{deptAvg.toFixed(1)}</span><span className="text-[10px]" style={{ color: '#4B5563' }}>avg score</span></div></div>
-          <div className="flex-1 space-y-1.5">{deptDonutData.map((d, i) => (<div key={i} className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: PIE_COLORS[i] }} /><span>{d.name}</span><span className="font-bold">{d.value}</span><span style={{ color: '#9CA3AF' }}>({d.percentage}%)</span></div>))}</div>
+          <div className="relative"><ResponsiveContainer width={180} height={180}><PieChart><Pie data={deptDonutData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={2}>{deptDonutData.map((_, i) => (<Cell key={i} fill={STAR_COLORS[i]} />))}</Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: '#002366' }}>{deptAvg.toFixed(1)}</span><span className="text-[10px]" style={{ color: '#4B5563' }}>avg score</span></div></div>
+          <div className="flex-1 space-y-1.5">{deptDonutData.map((d, i) => (<div key={i} className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: STAR_COLORS[i] }} /><span>{d.name}</span><span className="font-bold">{d.value}</span><span style={{ color: '#9CA3AF' }}>({d.percentage}%)</span></div>))}</div>
         </div>
       </div>
       <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>

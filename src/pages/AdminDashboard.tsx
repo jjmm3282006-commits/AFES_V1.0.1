@@ -62,10 +62,10 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
 
   // Calculate institution-wide score distribution
   const allEvals = store.getEvaluations().filter(e => e.cycleId === cycleId);
-  const institutionScoreDist = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  const institutionScoreDist = [0, 0, 0, 0, 0];
   allEvals.forEach(ev => {
     Object.values(ev.ratings).forEach(rating => {
-      if (rating >= 1 && rating <= 10) institutionScoreDist[rating - 1]++;
+      if (rating >= 1 && rating <= 5) institutionScoreDist[rating - 1]++;
     });
   });
   const institutionTotalRatings = institutionScoreDist.reduce((a, b) => a + b, 0);
@@ -73,10 +73,11 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
     ? institutionScoreDist.reduce((sum, count, idx) => sum + count * (idx + 1), 0) / institutionTotalRatings 
     : 0;
   const institutionDonutData = [
-    { name: '9-10', value: institutionScoreDist[8] + institutionScoreDist[9], percentage: institutionTotalRatings > 0 ? (((institutionScoreDist[8] + institutionScoreDist[9]) / institutionTotalRatings) * 100).toFixed(1) : '0' },
-    { name: '6-8', value: institutionScoreDist[5] + institutionScoreDist[6] + institutionScoreDist[7], percentage: institutionTotalRatings > 0 ? (((institutionScoreDist[5] + institutionScoreDist[6] + institutionScoreDist[7]) / institutionTotalRatings) * 100).toFixed(1) : '0' },
-    { name: '4-5', value: institutionScoreDist[3] + institutionScoreDist[4], percentage: institutionTotalRatings > 0 ? (((institutionScoreDist[3] + institutionScoreDist[4]) / institutionTotalRatings) * 100).toFixed(1) : '0' },
-    { name: '1-3', value: institutionScoreDist[0] + institutionScoreDist[1] + institutionScoreDist[2], percentage: institutionTotalRatings > 0 ? (((institutionScoreDist[0] + institutionScoreDist[1] + institutionScoreDist[2]) / institutionTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '5★', value: institutionScoreDist[4], percentage: institutionTotalRatings > 0 ? ((institutionScoreDist[4] / institutionTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '4★', value: institutionScoreDist[3], percentage: institutionTotalRatings > 0 ? ((institutionScoreDist[3] / institutionTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '3★', value: institutionScoreDist[2], percentage: institutionTotalRatings > 0 ? ((institutionScoreDist[2] / institutionTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '2★', value: institutionScoreDist[1], percentage: institutionTotalRatings > 0 ? ((institutionScoreDist[1] / institutionTotalRatings) * 100).toFixed(1) : '0' },
+    { name: '1★', value: institutionScoreDist[0], percentage: institutionTotalRatings > 0 ? ((institutionScoreDist[0] / institutionTotalRatings) * 100).toFixed(1) : '0' },
   ];
 
   return (
@@ -135,8 +136,8 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
           <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><BarChart3 size={16} style={{ color: '#B87333' }} />Institution Score Distribution</h3>
             <div className="flex items-center gap-4">
-              <div className="relative"><ResponsiveContainer width={180} height={180}><PieChart><Pie data={institutionDonutData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={2}>{institutionDonutData.map((_, i) => (<Cell key={i} fill={PIE_COLORS[i]} />))}</Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: '#002366' }}>{institutionAvg.toFixed(1)}</span><span className="text-[10px]" style={{ color: '#4B5563' }}>avg score</span></div></div>
-              <div className="flex-1 space-y-1.5">{institutionDonutData.map((d, i) => (<div key={i} className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: PIE_COLORS[i] }} /><span>{d.name}</span><span className="font-bold">{d.value}</span><span style={{ color: '#9CA3AF' }}>({d.percentage}%)</span></div>))}</div>
+              <div className="relative"><ResponsiveContainer width={180} height={180}><PieChart><Pie data={institutionDonutData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={2}>{institutionDonutData.map((_, i) => (<Cell key={i} fill={STAR_COLORS[i]} />))}</Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: '#002366' }}>{institutionAvg.toFixed(1)}</span><span className="text-[10px]" style={{ color: '#4B5563' }}>avg score</span></div></div>
+              <div className="flex-1 space-y-1.5">{institutionDonutData.map((d, i) => (<div key={i} className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: STAR_COLORS[i] }} /><span>{d.name}</span><span className="font-bold">{d.value}</span><span style={{ color: '#9CA3AF' }}>({d.percentage}%)</span></div>))}</div>
             </div>
           </div>
           {flaggedFaculty.length > 0 && (<div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#FEE2E2', border: '1px solid #C41E3A' }}><h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#C41E3A' }}><AlertTriangle size={16} />Below Benchmark (Average &lt; {BENCHMARK.toFixed(1)})</h3><div className="space-y-2">{flaggedFaculty.map(f => { const m = store.getFacultyMetrics(f.id, cycleId); return (<div key={f.id} className="flex items-center justify-between p-2 rounded-lg bg-white/50"><span className="text-sm">{f.name} ({f.department})</span><span className="text-sm font-bold" style={{ color: '#C41E3A' }}>{m.overallAverage.toFixed(2)}</span></div>); })}</div></div>)}
