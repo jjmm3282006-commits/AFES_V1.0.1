@@ -1,8 +1,9 @@
-import React, { useState, useEffect, ReactNode } from 'react';
+import React, { useState, useEffect, useRef, ReactNode } from 'react';
 import { useAuth } from '../auth';
 import { store } from '../store';
+import { exportData, importData, clearLocalStorage, hasPersistedData, getStorageSize } from '../utils/persistence';
 import type { EvaluationCycle } from '../types';
-import { LogOut, Shield, BookOpen, Users, BarChart3, Settings, GraduationCap, Calendar } from 'lucide-react';
+import { LogOut, Shield, BookOpen, Users, BarChart3, Settings, GraduationCap, Calendar, Download, Upload, RefreshCw, Database } from 'lucide-react';
 
 interface LayoutProps { children: ReactNode; viewingCycleId?: string; onViewingCycleChange?: (cycleId: string) => void; }
 
@@ -10,13 +11,59 @@ export default function Layout({ children, viewingCycleId, onViewingCycleChange 
   const { user, logout } = useAuth();
   const [cycles, setCycles] = useState<EvaluationCycle[]>([]);
   const [activeCycle, setActiveCycle] = useState<EvaluationCycle | undefined>();
+  const [showDataPanel, setShowDataPanel] = useState(false);
+  const [storageSize, setStorageSize] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const load = () => { setCycles(store.getCycles()); setActiveCycle(store.getActiveCycle()); };
+    const load = () => { setCycles(store.getCycles()); setActiveCycle(store.getActiveCycle()); setStorageSize(getStorageSize()); };
     load();
     const unsub = store.subscribe('cycle_changed', load);
     return unsub;
   }, []);
+
+  const handleExport = () => {
+    try {
+      const data = store.exportAllData();
+      exportData(data);
+      alert('✅ Data exported successfully!');
+    } catch (error) {
+      alert('❌ Failed to export data. Please try again.');
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!confirm('⚠️ Importing data will replace all current data. Are you sure?')) {
+      event.target.value = '';
+      return;
+    }
+
+    try {
+      const data = await importData(file);
+      store.importAllData(data);
+      alert('✅ Data imported successfully! The page will reload.');
+      window.location.reload();
+    } catch (error) {
+      alert(`❌ Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      event.target.value = '';
+    }
+  };
+
+  const handleReset = () => {
+    if (!confirm('⚠️ This will delete ALL data and reset to seed values. This cannot be undone. Are you sure?')) {
+      return;
+    }
+    if (!confirm('⚠️ FINAL WARNING: All data will be permanently lost. Continue?')) {
+      return;
+    }
+
+    store.resetData();
+    alert('✅ Data reset to seed values. The page will reload.');
+    window.location.reload();
+  };
 
   const getRoleIcon = () => {
     switch (user?.role) {
@@ -80,8 +127,46 @@ export default function Layout({ children, viewingCycleId, onViewingCycleChange 
                 {cycles.filter(c => c.status !== 'upcoming').map(c => (<option key={c.id} value={c.id}>{c.displayName} {c.id === activeCycle?.id ? '(Active)' : c.status === 'archived' ? '(Archived)' : ''}</option>))}
               </select>
             </div>
-            {isViewingArchived && <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ backgroundColor: '#FEF3C7', border: '1px solid #B87333' }}><span className="text-xs">⚠️</span><span className="text-xs font-medium" style={{ color: '#B87333' }}>Viewing Archived Evaluation Data</span></div>}
+            <div className="flex items-center gap-2">
+              {isViewingArchived && <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ backgroundColor: '#FEF3C7', border: '1px solid #B87333' }}><span className="text-xs">⚠️</span><span className="text-xs font-medium" style={{ color: '#B87333' }}>Viewing Archived Evaluation Data</span></div>}
+              {user?.role === 'admin' && (
+                <button onClick={() => setShowDataPanel(!showDataPanel)} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium hover:opacity-90" style={{ backgroundColor: '#002366', color: '#FFFFFF' }}>
+                  <Database size={12} />
+                  <span>Data</span>
+                </button>
+              )}
+            </div>
           </div>
+          {showDataPanel && user?.role === 'admin' && (
+            <div className="border-t" style={{ borderColor: '#D5D8DC' }}>
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs font-medium" style={{ color: '#4B5563' }}>Storage: {(storageSize).toFixed(2)} KB</span>
+                    <span className="text-xs" style={{ color: '#9CA3AF' }}>•</span>
+                    <span className="text-xs" style={{ color: hasPersistedData() ? '#2E8B57' : '#9CA3AF' }}>
+                      {hasPersistedData() ? '✓ Data persisted' : '○ Using seed data'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90" style={{ backgroundColor: '#2E8B57', color: '#FFFFFF' }}>
+                      <Download size={12} />
+                      <span>Export</span>
+                    </button>
+                    <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90" style={{ backgroundColor: '#B87333', color: '#FFFFFF' }}>
+                      <Upload size={12} />
+                      <span>Import</span>
+                    </button>
+                    <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
+                    <button onClick={handleReset} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90" style={{ backgroundColor: '#C41E3A', color: '#FFFFFF' }}>
+                      <RefreshCw size={12} />
+                      <span>Reset</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6">{children}</main>

@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { User, Faculty, Student, Dean, EvaluationCycle, Criterion, SubQuestion, Evaluation, AuditLogEntry, RateLimitEntry, FacultyMetrics, EventType, TrainingRecommendation } from './types';
+import { saveToLocalStorage, loadFromLocalStorage, clearLocalStorage } from './utils/persistence';
 
 const BENCHMARK = 3.0;
 const THRESHOLD = 10;
@@ -198,11 +199,40 @@ class DataStore {
   ];
 
   constructor() {
-    this.addAuditLog('system', 'system_init', 'DataStore', `System initialized — Faculty: ${FACULTY_SEED.length}, Students: ${STUDENTS_SEED.length}, Deans: ${DEANS_SEED.length}, Cycles: ${CYCLES_SEED.length}, Criteria: ${CRITERIA_SEED.length}, Sub-Questions: ${SUB_QUESTIONS.length}, Seed Evaluations: ${this.evaluations.length}`);
+    // Try to load persisted data
+    const persistedData = loadFromLocalStorage();
+    if (persistedData) {
+      this.faculty = persistedData.faculty || this.faculty;
+      this.students = persistedData.students || this.students;
+      this.deans = persistedData.deans || this.deans;
+      this.cycles = persistedData.cycles || this.cycles;
+      this.criteria = persistedData.criteria || this.criteria;
+      this.subQuestions = persistedData.subQuestions || this.subQuestions;
+      this.evaluations = persistedData.evaluations || this.evaluations;
+      this.auditLog = persistedData.auditLog || this.auditLog;
+      this.trainingRecommendations = persistedData.trainingRecommendations || this.trainingRecommendations;
+      this.addAuditLog('system', 'data_restored', 'DataStore', 'Data restored from localStorage');
+    } else {
+      this.addAuditLog('system', 'system_init', 'DataStore', `System initialized — Faculty: ${FACULTY_SEED.length}, Students: ${STUDENTS_SEED.length}, Deans: ${DEANS_SEED.length}, Cycles: ${CYCLES_SEED.length}, Criteria: ${CRITERIA_SEED.length}, Sub-Questions: ${SUB_QUESTIONS.length}, Seed Evaluations: ${this.evaluations.length}`);
+    }
   }
 
   private async simulateLatency(): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
+  }
+
+  private persistData(): void {
+    saveToLocalStorage({
+      faculty: this.faculty,
+      students: this.students,
+      deans: this.deans,
+      cycles: this.cycles,
+      criteria: this.criteria,
+      subQuestions: this.subQuestions,
+      evaluations: this.evaluations,
+      auditLog: this.auditLog,
+      trainingRecommendations: this.trainingRecommendations,
+    });
   }
 
   subscribe(event: EventType, cb: () => void): () => void {
@@ -241,6 +271,7 @@ class DataStore {
     const f = this.faculty.find(fc => fc.id === facultyId);
     if (f) { f.acknowledgmentStatus = 'acknowledged'; f.acknowledgedAt = new Date().toISOString(); f.acknowledgedBy = verifiedBy; }
     this.addAuditLog(`faculty:${facultyId}`, 'acknowledgment', facultyId, `Faculty acknowledged report. Verified by: ${verifiedBy}`);
+    this.persistData();
     this.emit('acknowledgment_changed');
   }
 
@@ -267,6 +298,7 @@ class DataStore {
     const newRec: TrainingRecommendation = { id: uuidv4(), facultyId, cycleId: effectiveCycleId, recommendation, generatedAt: new Date().toISOString(), editedByAdmin: false };
     this.trainingRecommendations.push(newRec);
     this.addAuditLog('admin:ai', 'tna_generated', facultyId, `AI-generated TNA for "${faculty.name}". Low criteria: ${lowCriteria.map(c => `${c.name}(${c.avg.toFixed(2)})`).join(', ') || 'none'}`);
+    this.persistData();
     this.emit('training_changed');
     return newRec;
   }
@@ -274,12 +306,13 @@ class DataStore {
   async updateTrainingRecommendation(recId: string, newRec: string): Promise<void> {
     await this.simulateLatency();
     const rec = this.trainingRecommendations.find(r => r.id === recId);
-    if (rec) { rec.recommendation = newRec; rec.editedByAdmin = true; this.emit('training_changed'); }
+    if (rec) { rec.recommendation = newRec; rec.editedByAdmin = true; this.persistData(); this.emit('training_changed'); }
   }
 
   async deleteTrainingRecommendation(recId: string): Promise<void> {
     await this.simulateLatency();
     this.trainingRecommendations = this.trainingRecommendations.filter(r => r.id !== recId);
+    this.persistData();
     this.emit('training_changed');
   }
 
@@ -291,6 +324,7 @@ class DataStore {
     const newCycle = { ...cycle, id: `cyc-${uuidv4().slice(0, 8)}` };
     this.cycles.push(newCycle);
     this.addAuditLog('admin', 'cycle_created', newCycle.id, `Created "${newCycle.displayName}". Dates: ${newCycle.startDate} to ${newCycle.endDate}`);
+    this.persistData();
     this.emit('cycle_changed');
     return newCycle;
   }
@@ -302,6 +336,7 @@ class DataStore {
     const cycle = this.cycles.find(c => c.id === cycleId);
     if (cycle) cycle.status = 'active';
     this.addAuditLog('admin', 'cycle_activated', cycleId, `Activated "${cycle?.displayName}". Previous: "${prev?.displayName || 'none'}"`);
+    this.persistData();
     this.emit('cycle_changed');
   }
 
@@ -310,6 +345,7 @@ class DataStore {
     const cycle = this.cycles.find(c => c.id === cycleId);
     if (cycle) cycle.status = 'archived';
     this.addAuditLog('admin', 'cycle_archived', cycleId, `Archived "${cycle?.displayName}"`);
+    this.persistData();
     this.emit('cycle_changed');
   }
 
@@ -318,6 +354,7 @@ class DataStore {
     const cycle = this.cycles.find(c => c.id === cycleId);
     this.cycles = this.cycles.filter(c => c.id !== cycleId);
     this.addAuditLog('admin', 'cycle_removed', cycleId, `Removed "${cycle?.name}"`);
+    this.persistData();
     this.emit('cycle_changed');
   }
 
@@ -330,6 +367,7 @@ class DataStore {
     const newCrit = { id: `crit-${uuidv4().slice(0, 8)}`, name, order: this.criteria.length + 1 };
     this.criteria.push(newCrit);
     this.addAuditLog('admin', 'criterion_added', newCrit.id, `Added "${name}"`);
+    this.persistData();
     this.emit('criteria_changed');
     return newCrit;
   }
@@ -342,6 +380,7 @@ class DataStore {
     this.subQuestions = this.subQuestions.filter(sq => sq.criterionId !== criterionId);
     this.criteria.forEach((c, i) => c.order = i + 1);
     this.addAuditLog('admin', 'criterion_removed', criterionId, `Removed "${crit?.name}" and ${sqCount} sub-questions`);
+    this.persistData();
     this.emit('criteria_changed');
   }
 
@@ -352,6 +391,7 @@ class DataStore {
     this.subQuestions.push(newSQ);
     const crit = this.criteria.find(c => c.id === criterionId);
     this.addAuditLog('admin', 'subquestion_added', newSQ.id, `Added to "${crit?.name}": "${text}"`);
+    this.persistData();
     this.emit('criteria_changed');
     return newSQ;
   }
@@ -364,6 +404,7 @@ class DataStore {
     this.subQuestions = this.subQuestions.filter(s => s.id !== sqId);
     this.subQuestions.filter(s => s.criterionId === sq.criterionId).sort((a, b) => a.order - b.order).forEach((s, i) => s.order = i + 1);
     this.addAuditLog('admin', 'subquestion_removed', sqId, `Removed from "${crit?.name}": "${sq.text}"`);
+    this.persistData();
     this.emit('criteria_changed');
   }
 
@@ -375,6 +416,7 @@ class DataStore {
     const crit = this.criteria.find(c => c.id === sq.criterionId);
     sq.text = newText;
     this.addAuditLog('admin', 'subquestion_edited', sqId, `Edited sub-question in "${crit?.name}": "${oldText}" → "${newText}"`);
+    this.persistData();
     this.emit('criteria_changed');
   }
 
@@ -413,6 +455,7 @@ class DataStore {
     const vals = Object.values(evalData.ratings);
     const avg = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     this.addAuditLog('student:anonymous', 'submission', evalData.facultyId, `Faculty: "${fac?.name}", Course: ${evalData.courseId}, Avg: ${avg.toFixed(2)}/5`);
+    this.persistData();
     this.emit('submission_added');
     return evaluation;
   }
@@ -492,6 +535,52 @@ class DataStore {
   getStudents(): Student[] { return [...this.students]; }
   getStudentById(id: string): Student | undefined { return this.students.find(s => s.id === id); }
   getDeans(): Dean[] { return [...this.deans]; }
+
+  // Data management methods
+  resetData(): void {
+    this.faculty = JSON.parse(JSON.stringify(FACULTY_SEED));
+    this.students = [...STUDENTS_SEED];
+    this.deans = [...DEANS_SEED];
+    this.cycles = JSON.parse(JSON.stringify(CYCLES_SEED));
+    this.criteria = [...CRITERIA_SEED];
+    this.subQuestions = [...SUB_QUESTIONS];
+    this.evaluations = generateSeedEvaluations();
+    this.auditLog = [];
+    this.trainingRecommendations = [];
+    this.studentSessionEvals.clear();
+    this.addAuditLog('admin', 'data_reset', 'DataStore', 'All data reset to seed values');
+    this.persistData();
+    this.emit('data_refresh');
+  }
+
+  exportAllData(): any {
+    return {
+      faculty: this.faculty,
+      students: this.students,
+      deans: this.deans,
+      cycles: this.cycles,
+      criteria: this.criteria,
+      subQuestions: this.subQuestions,
+      evaluations: this.evaluations,
+      auditLog: this.auditLog,
+      trainingRecommendations: this.trainingRecommendations,
+    };
+  }
+
+  importAllData(data: any): void {
+    if (data.faculty) this.faculty = data.faculty;
+    if (data.students) this.students = data.students;
+    if (data.deans) this.deans = data.deans;
+    if (data.cycles) this.cycles = data.cycles;
+    if (data.criteria) this.criteria = data.criteria;
+    if (data.subQuestions) this.subQuestions = data.subQuestions;
+    if (data.evaluations) this.evaluations = data.evaluations;
+    if (data.auditLog) this.auditLog = data.auditLog;
+    if (data.trainingRecommendations) this.trainingRecommendations = data.trainingRecommendations;
+    this.addAuditLog('admin', 'data_imported', 'DataStore', 'Data imported from external source');
+    this.persistData();
+    this.emit('data_refresh');
+  }
 }
 
 export const store = new DataStore();
