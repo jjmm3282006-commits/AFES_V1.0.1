@@ -402,12 +402,6 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
       )}
 
       <ConfirmDialog isOpen={confirmDialog.open} title={confirmDialog.title} message={confirmDialog.message} type={confirmDialog.type} onConfirm={confirmDialog.onConfirm} onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))} />
-      
-      {/* Print Report - Only visible when printing */}
-      <AdminPrintReport
-        cycleName={activeCycle?.displayName || 'Current Cycle'}
-        criteria={criteria}
-      />
     </div>
   );
 }
