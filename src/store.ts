@@ -6,21 +6,25 @@ const BENCHMARK = 3.0;
 const THRESHOLD = 10;
 
 const SUB_QUESTIONS: SubQuestion[] = [
-  { id: 'sq-clarity-1', criterionId: 'crit-clarity', text: 'Explains concepts in a clear and understandable manner', order: 1 },
-  { id: 'sq-clarity-2', criterionId: 'crit-clarity', text: 'Uses appropriate language and terminology for the course level', order: 2 },
-  { id: 'sq-clarity-3', criterionId: 'crit-clarity', text: 'Provides clear instructions for assignments and exams', order: 3 },
-  { id: 'sq-pacing-1', criterionId: 'crit-pacing', text: 'Covers material at an appropriate speed', order: 1 },
-  { id: 'sq-pacing-2', criterionId: 'crit-pacing', text: 'Allows sufficient time for questions and discussion', order: 2 },
-  { id: 'sq-pacing-3', criterionId: 'crit-pacing', text: 'Balances theory and practical applications well', order: 3 },
-  { id: 'sq-engagement-1', criterionId: 'crit-engagement', text: 'Creates an interactive and stimulating learning environment', order: 1 },
-  { id: 'sq-engagement-2', criterionId: 'crit-engagement', text: 'Encourages student participation and questions', order: 2 },
-  { id: 'sq-engagement-3', criterionId: 'crit-engagement', text: 'Uses varied teaching methods effectively', order: 3 },
-  { id: 'sq-assessment-1', criterionId: 'crit-assessment', text: 'Assessments align with course learning objectives', order: 1 },
-  { id: 'sq-assessment-2', criterionId: 'crit-assessment', text: 'Grading criteria are transparent and consistently applied', order: 2 },
-  { id: 'sq-assessment-3', criterionId: 'crit-assessment', text: 'Provides constructive and timely feedback on assessments', order: 3 },
-  { id: 'sq-workload-1', criterionId: 'crit-workload', text: 'Course workload is reasonable for the credit hours', order: 1 },
-  { id: 'sq-workload-2', criterionId: 'crit-workload', text: 'Reading and assignment deadlines are manageable', order: 2 },
-  { id: 'sq-workload-3', criterionId: 'crit-workload', text: 'Balance between coursework and other commitments is appropriate', order: 3 },
+  // Teaching Style (3 sub-questions)
+  { id: 'sq-teaching-1', criterionId: 'crit-teaching', text: 'Uses effective and engaging teaching methods', order: 1 },
+  { id: 'sq-teaching-2', criterionId: 'crit-teaching', text: 'Presents material in a clear and organized manner', order: 2 },
+  { id: 'sq-teaching-3', criterionId: 'crit-teaching', text: 'Encourages active participation and critical thinking', order: 3 },
+  
+  // Mastery of Subject (3 sub-questions)
+  { id: 'sq-mastery-1', criterionId: 'crit-mastery', text: 'Demonstrates deep knowledge of the subject matter', order: 1 },
+  { id: 'sq-mastery-2', criterionId: 'crit-mastery', text: 'Answers questions accurately and confidently', order: 2 },
+  { id: 'sq-mastery-3', criterionId: 'crit-mastery', text: 'Connects theory to real-world applications effectively', order: 3 },
+  
+  // Punctuality (3 sub-questions)
+  { id: 'sq-punctuality-1', criterionId: 'crit-punctuality', text: 'Starts and ends class on time', order: 1 },
+  { id: 'sq-punctuality-2', criterionId: 'crit-punctuality', text: 'Returns graded assignments and feedback promptly', order: 2 },
+  { id: 'sq-punctuality-3', criterionId: 'crit-punctuality', text: 'Meets scheduled office hours consistently', order: 3 },
+  
+  // Professionalism (3 sub-questions)
+  { id: 'sq-professionalism-1', criterionId: 'crit-professionalism', text: 'Maintains respectful and professional communication', order: 1 },
+  { id: 'sq-professionalism-2', criterionId: 'crit-professionalism', text: 'Demonstrates fairness and integrity in all interactions', order: 2 },
+  { id: 'sq-professionalism-3', criterionId: 'crit-professionalism', text: 'Shows commitment to student success and development', order: 3 },
 ];
 
 const FACULTY_SEED: Faculty[] = [
@@ -63,11 +67,10 @@ const CYCLES_SEED: EvaluationCycle[] = [
 ];
 
 const CRITERIA_SEED: Criterion[] = [
-  { id: 'crit-clarity', name: 'Clarity', order: 1 },
-  { id: 'crit-pacing', name: 'Pacing', order: 2 },
-  { id: 'crit-engagement', name: 'Engagement', order: 3 },
-  { id: 'crit-assessment', name: 'Assessment Fairness', order: 4 },
-  { id: 'crit-workload', name: 'Workload', order: 5 },
+  { id: 'crit-teaching', name: 'Teaching Style', order: 1 },
+  { id: 'crit-mastery', name: 'Mastery of Subject', order: 2 },
+  { id: 'crit-punctuality', name: 'Punctuality', order: 3 },
+  { id: 'crit-professionalism', name: 'Professionalism', order: 4 },
 ];
 
 // Deterministic rating generator for consistent seed data
@@ -93,71 +96,66 @@ function generateSeedEvaluations(): Evaluation[] {
   // F001 - Dr. Sarah Chen - High performer (14 subs, avg ~4.5)
   // Consistent high ratings across all criteria
   const f001BaseRatings: Record<string, number> = {
-    'sq-clarity-1': 5, 'sq-clarity-2': 4, 'sq-clarity-3': 5,
-    'sq-pacing-1': 4, 'sq-pacing-2': 5, 'sq-pacing-3': 4,
-    'sq-engagement-1': 5, 'sq-engagement-2': 4, 'sq-engagement-3': 5,
-    'sq-assessment-1': 5, 'sq-assessment-2': 4, 'sq-assessment-3': 5,
-    'sq-workload-1': 4, 'sq-workload-2': 5, 'sq-workload-3': 4,
+    'sq-teaching-1': 5, 'sq-teaching-2': 5, 'sq-teaching-3': 5,
+    'sq-mastery-1': 5, 'sq-mastery-2': 5, 'sq-mastery-3': 4,
+    'sq-punctuality-1': 5, 'sq-punctuality-2': 5, 'sq-punctuality-3': 5,
+    'sq-professionalism-1': 5, 'sq-professionalism-2': 5, 'sq-professionalism-3': 5,
   };
   for (let i = 0; i < 14; i++) {
     const ratings = createDeterministicRatings(f001BaseRatings);
     // Add slight variation for realism
-    if (i % 3 === 0) { ratings['sq-pacing-1'] = 5; ratings['sq-workload-1'] = 5; }
+    if (i % 3 === 0) { ratings['sq-mastery-3'] = 4; ratings['sq-punctuality-2'] = 4; }
     evals.push({ id: uuidv4(), facultyId: 'F001', courseId: FACULTY_SEED[0].courses[i % 3], cycleId: 'cyc-001', ratings, feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2026, 2, 5 + i).toISOString() });
   }
 
-  // F002 - Dr. James Wilson - Mid performer with pacing issues (12 subs, avg ~3.2)
-  // Good clarity and assessment, but poor pacing
+  // F002 - Dr. James Wilson - Mid performer with punctuality issues (12 subs, avg ~3.2)
+  // Good teaching and mastery, but poor punctuality
   const f002BaseRatings: Record<string, number> = {
-    'sq-clarity-1': 4, 'sq-clarity-2': 4, 'sq-clarity-3': 4,
-    'sq-pacing-1': 2, 'sq-pacing-2': 2, 'sq-pacing-3': 3, // Low pacing scores
-    'sq-engagement-1': 3, 'sq-engagement-2': 3, 'sq-engagement-3': 4,
-    'sq-assessment-1': 4, 'sq-assessment-2': 4, 'sq-assessment-3': 4,
-    'sq-workload-1': 3, 'sq-workload-2': 3, 'sq-workload-3': 3,
+    'sq-teaching-1': 4, 'sq-teaching-2': 4, 'sq-teaching-3': 4,
+    'sq-mastery-1': 4, 'sq-mastery-2': 4, 'sq-mastery-3': 4,
+    'sq-punctuality-1': 2, 'sq-punctuality-2': 2, 'sq-punctuality-3': 3, // Low punctuality scores
+    'sq-professionalism-1': 3, 'sq-professionalism-2': 3, 'sq-professionalism-3': 3,
   };
   for (let i = 0; i < 12; i++) {
     const ratings = createDeterministicRatings(f002BaseRatings);
-    if (i % 4 === 0) { ratings['sq-engagement-3'] = 3; }
+    if (i % 4 === 0) { ratings['sq-teaching-3'] = 3; }
     evals.push({ id: uuidv4(), facultyId: 'F002', courseId: FACULTY_SEED[1].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 3) % feedbacks.length], submittedAt: new Date(2026, 2, 7 + i).toISOString() });
   }
 
   // F003 - Dr. Maria Garcia - Low performer (11 subs, avg ~2.3)
-  // Poor engagement and assessment fairness
+  // Poor teaching and professionalism
   const f003BaseRatings: Record<string, number> = {
-    'sq-clarity-1': 3, 'sq-clarity-2': 2, 'sq-clarity-3': 3,
-    'sq-pacing-1': 2, 'sq-pacing-2': 3, 'sq-pacing-3': 2,
-    'sq-engagement-1': 1, 'sq-engagement-2': 2, 'sq-engagement-3': 1, // Very low engagement
-    'sq-assessment-1': 2, 'sq-assessment-2': 1, 'sq-assessment-3': 2, // Very low assessment
-    'sq-workload-1': 3, 'sq-workload-2': 2, 'sq-workload-3': 3,
+    'sq-teaching-1': 2, 'sq-teaching-2': 2, 'sq-teaching-3': 1, // Very low teaching
+    'sq-mastery-1': 3, 'sq-mastery-2': 3, 'sq-mastery-3': 2,
+    'sq-punctuality-1': 2, 'sq-punctuality-2': 3, 'sq-punctuality-3': 2,
+    'sq-professionalism-1': 1, 'sq-professionalism-2': 2, 'sq-professionalism-3': 1, // Very low professionalism
   };
   for (let i = 0; i < 11; i++) {
     const ratings = createDeterministicRatings(f003BaseRatings);
-    if (i % 3 === 0) { ratings['sq-clarity-1'] = 2; ratings['sq-pacing-2'] = 2; }
+    if (i % 3 === 0) { ratings['sq-teaching-1'] = 1; ratings['sq-professionalism-2'] = 1; }
     evals.push({ id: uuidv4(), facultyId: 'F003', courseId: FACULTY_SEED[2].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 5) % feedbacks.length], submittedAt: new Date(2026, 2, 10 + i).toISOString() });
   }
 
   // F004 - Dr. Robert Kim - Below threshold (7 subs, avg ~4.2)
   // Good performer but not enough submissions
   const f004BaseRatings: Record<string, number> = {
-    'sq-clarity-1': 4, 'sq-clarity-2': 5, 'sq-clarity-3': 4,
-    'sq-pacing-1': 4, 'sq-pacing-2': 4, 'sq-pacing-3': 5,
-    'sq-engagement-1': 4, 'sq-engagement-2': 4, 'sq-engagement-3': 4,
-    'sq-assessment-1': 5, 'sq-assessment-2': 4, 'sq-assessment-3': 5,
-    'sq-workload-1': 4, 'sq-workload-2': 4, 'sq-workload-3': 4,
+    'sq-teaching-1': 4, 'sq-teaching-2': 5, 'sq-teaching-3': 4,
+    'sq-mastery-1': 5, 'sq-mastery-2': 4, 'sq-mastery-3': 5,
+    'sq-punctuality-1': 4, 'sq-punctuality-2': 4, 'sq-punctuality-3': 5,
+    'sq-professionalism-1': 4, 'sq-professionalism-2': 4, 'sq-professionalism-3': 4,
   };
   for (let i = 0; i < 7; i++) {
     const ratings = createDeterministicRatings(f004BaseRatings);
     evals.push({ id: uuidv4(), facultyId: 'F004', courseId: 'MATH301', cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 7) % feedbacks.length], submittedAt: new Date(2026, 2, 12 + i).toISOString() });
   }
 
-  // F005 - Dr. Emily Thompson - Below threshold with workload issues (5 subs, avg ~3.0)
-  // Good overall but poor workload management
+  // F005 - Dr. Emily Thompson - Below threshold with professionalism issues (5 subs, avg ~3.0)
+  // Good overall but poor professionalism
   const f005BaseRatings: Record<string, number> = {
-    'sq-clarity-1': 4, 'sq-clarity-2': 3, 'sq-clarity-3': 4,
-    'sq-pacing-1': 3, 'sq-pacing-2': 3, 'sq-pacing-3': 3,
-    'sq-engagement-1': 3, 'sq-engagement-2': 4, 'sq-engagement-3': 3,
-    'sq-assessment-1': 3, 'sq-assessment-2': 3, 'sq-assessment-3': 4,
-    'sq-workload-1': 2, 'sq-workload-2': 2, 'sq-workload-3': 1, // Very low workload scores
+    'sq-teaching-1': 4, 'sq-teaching-2': 3, 'sq-teaching-3': 4,
+    'sq-mastery-1': 3, 'sq-mastery-2': 3, 'sq-mastery-3': 3,
+    'sq-punctuality-1': 3, 'sq-punctuality-2': 3, 'sq-punctuality-3': 3,
+    'sq-professionalism-1': 2, 'sq-professionalism-2': 2, 'sq-professionalism-3': 1, // Very low professionalism
   };
   for (let i = 0; i < 5; i++) {
     const ratings = createDeterministicRatings(f005BaseRatings);
@@ -166,25 +164,23 @@ function generateSeedEvaluations(): Evaluation[] {
 
   // F006 - Dr. Michael Brown - Good performer (13 subs, avg ~4.0)
   const f006BaseRatings: Record<string, number> = {
-    'sq-clarity-1': 4, 'sq-clarity-2': 4, 'sq-clarity-3': 4,
-    'sq-pacing-1': 4, 'sq-pacing-2': 4, 'sq-pacing-3': 4,
-    'sq-engagement-1': 4, 'sq-engagement-2': 4, 'sq-engagement-3': 4,
-    'sq-assessment-1': 4, 'sq-assessment-2': 4, 'sq-assessment-3': 4,
-    'sq-workload-1': 4, 'sq-workload-2': 4, 'sq-workload-3': 4,
+    'sq-teaching-1': 4, 'sq-teaching-2': 4, 'sq-teaching-3': 4,
+    'sq-mastery-1': 4, 'sq-mastery-2': 4, 'sq-mastery-3': 4,
+    'sq-punctuality-1': 4, 'sq-punctuality-2': 4, 'sq-punctuality-3': 4,
+    'sq-professionalism-1': 4, 'sq-professionalism-2': 4, 'sq-professionalism-3': 4,
   };
   for (let i = 0; i < 13; i++) {
     const ratings = createDeterministicRatings(f006BaseRatings);
-    if (i % 4 === 0) { ratings['sq-engagement-1'] = 3; ratings['sq-engagement-2'] = 3; }
+    if (i % 4 === 0) { ratings['sq-teaching-1'] = 3; ratings['sq-teaching-2'] = 3; }
     evals.push({ id: uuidv4(), facultyId: 'F006', courseId: FACULTY_SEED[5].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2026, 2, 8 + i).toISOString() });
   }
 
   // F007 - Dr. Lisa Anderson - Mid performer (11 subs, avg ~3.5)
   const f007BaseRatings: Record<string, number> = {
-    'sq-clarity-1': 4, 'sq-clarity-2': 3, 'sq-clarity-3': 4,
-    'sq-pacing-1': 3, 'sq-pacing-2': 4, 'sq-pacing-3': 3,
-    'sq-engagement-1': 3, 'sq-engagement-2': 4, 'sq-engagement-3': 3,
-    'sq-assessment-1': 4, 'sq-assessment-2': 3, 'sq-assessment-3': 4,
-    'sq-workload-1': 3, 'sq-workload-2': 4, 'sq-workload-3': 3,
+    'sq-teaching-1': 4, 'sq-teaching-2': 3, 'sq-teaching-3': 4,
+    'sq-mastery-1': 3, 'sq-mastery-2': 4, 'sq-mastery-3': 3,
+    'sq-punctuality-1': 3, 'sq-punctuality-2': 4, 'sq-punctuality-3': 3,
+    'sq-professionalism-1': 4, 'sq-professionalism-2': 3, 'sq-professionalism-3': 4,
   };
   for (let i = 0; i < 11; i++) {
     const ratings = createDeterministicRatings(f007BaseRatings);
@@ -193,11 +189,10 @@ function generateSeedEvaluations(): Evaluation[] {
 
   // F008 - Dr. David Martinez - Below threshold (6 subs, avg ~3.8)
   const f008BaseRatings: Record<string, number> = {
-    'sq-clarity-1': 4, 'sq-clarity-2': 4, 'sq-clarity-3': 3,
-    'sq-pacing-1': 4, 'sq-pacing-2': 3, 'sq-pacing-3': 4,
-    'sq-engagement-1': 4, 'sq-engagement-2': 4, 'sq-engagement-3': 3,
-    'sq-assessment-1': 4, 'sq-assessment-2': 4, 'sq-assessment-3': 4,
-    'sq-workload-1': 3, 'sq-workload-2': 4, 'sq-workload-3': 4,
+    'sq-teaching-1': 4, 'sq-teaching-2': 4, 'sq-teaching-3': 3,
+    'sq-mastery-1': 4, 'sq-mastery-2': 4, 'sq-mastery-3': 4,
+    'sq-punctuality-1': 4, 'sq-punctuality-2': 3, 'sq-punctuality-3': 4,
+    'sq-professionalism-1': 4, 'sq-professionalism-2': 4, 'sq-professionalism-3': 4,
   };
   for (let i = 0; i < 6; i++) {
     const ratings = createDeterministicRatings(f008BaseRatings);
@@ -208,11 +203,10 @@ function generateSeedEvaluations(): Evaluation[] {
   for (let i = 0; i < 12; i++) {
     const facultyIdx = i % 8;
     const baseRatings: Record<string, number> = {
-      'sq-clarity-1': 4, 'sq-clarity-2': 3, 'sq-clarity-3': 4,
-      'sq-pacing-1': 3, 'sq-pacing-2': 4, 'sq-pacing-3': 3,
-      'sq-engagement-1': 4, 'sq-engagement-2': 3, 'sq-engagement-3': 4,
-      'sq-assessment-1': 3, 'sq-assessment-2': 4, 'sq-assessment-3': 3,
-      'sq-workload-1': 4, 'sq-workload-2': 3, 'sq-workload-3': 4,
+      'sq-teaching-1': 4, 'sq-teaching-2': 3, 'sq-teaching-3': 4,
+      'sq-mastery-1': 3, 'sq-mastery-2': 4, 'sq-mastery-3': 3,
+      'sq-punctuality-1': 4, 'sq-punctuality-2': 3, 'sq-punctuality-3': 4,
+      'sq-professionalism-1': 3, 'sq-professionalism-2': 4, 'sq-professionalism-3': 3,
     };
     const ratings = createDeterministicRatings(baseRatings);
     evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[facultyIdx].id, courseId: FACULTY_SEED[facultyIdx].courses[0], cycleId: 'cyc-003', ratings, feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2025, 11, 5 + i).toISOString() });
@@ -222,11 +216,10 @@ function generateSeedEvaluations(): Evaluation[] {
   for (let i = 0; i < 10; i++) {
     const facultyIdx = i % 8;
     const baseRatings: Record<string, number> = {
-      'sq-clarity-1': 3, 'sq-clarity-2': 4, 'sq-clarity-3': 3,
-      'sq-pacing-1': 4, 'sq-pacing-2': 3, 'sq-pacing-3': 4,
-      'sq-engagement-1': 3, 'sq-engagement-2': 4, 'sq-engagement-3': 3,
-      'sq-assessment-1': 4, 'sq-assessment-2': 3, 'sq-assessment-3': 4,
-      'sq-workload-1': 3, 'sq-workload-2': 4, 'sq-workload-3': 3,
+      'sq-teaching-1': 3, 'sq-teaching-2': 4, 'sq-teaching-3': 3,
+      'sq-mastery-1': 4, 'sq-mastery-2': 3, 'sq-mastery-3': 4,
+      'sq-punctuality-1': 3, 'sq-punctuality-2': 4, 'sq-punctuality-3': 3,
+      'sq-professionalism-1': 4, 'sq-professionalism-2': 3, 'sq-professionalism-3': 4,
     };
     const ratings = createDeterministicRatings(baseRatings);
     evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[facultyIdx].id, courseId: FACULTY_SEED[facultyIdx].courses[0], cycleId: 'cyc-004', ratings, feedback: feedbacks[(i + 2) % feedbacks.length], submittedAt: new Date(2025, 9, 5 + i).toISOString() });
@@ -244,40 +237,33 @@ function generateTrainingRecommendation(facultyName: string, lowCriteria: { name
     const critData = subQuestionData.find(c => c.criterionName === name);
     const lowSQs = critData?.subQuestions.filter(sq => sq.avg < BENCHMARK) || [];
     switch (name.toLowerCase()) {
-      case 'clarity':
-        const ca: string[] = [];
-        if (lowSQs.some(sq => sq.text.includes('clear and understandable'))) ca.push('• Break down complex concepts into smaller segments with real-world examples');
-        if (lowSQs.some(sq => sq.text.includes('appropriate language'))) ca.push('• Define technical terms when first introduced and provide a glossary');
-        if (lowSQs.some(sq => sq.text.includes('clear instructions'))) ca.push('• Provide written assignment guidelines with rubrics and exemplars');
-        recommendations.push(`**Clarity (${score}/5)**\nStudents report difficulty understanding course material. This suggests content may be presented too abstractly.\n\nRecommended actions:\n${ca.join('\n')}\n\nWhy this matters: When students cannot follow explanations, they cannot engage meaningfully with the material.`);
+      case 'teaching style':
+        const ta: string[] = [];
+        if (lowSQs.some(sq => sq.text.includes('effective and engaging'))) ta.push('• Incorporate active learning techniques such as group discussions and problem-solving activities');
+        if (lowSQs.some(sq => sq.text.includes('clear and organized'))) ta.push('• Provide structured outlines and visual aids to organize lecture content');
+        if (lowSQs.some(sq => sq.text.includes('active participation'))) ta.push('• Use questioning techniques and interactive exercises to engage students');
+        recommendations.push(`**Teaching Style (${score}/5)**\nStudents report that teaching methods need improvement to enhance engagement and clarity.\n\nRecommended actions:\n${ta.join('\n')}\n\nWhy this matters: Effective teaching methods directly impact student learning outcomes and satisfaction.`);
         break;
-      case 'pacing':
-        const pa: string[] = [];
-        if (lowSQs.some(sq => sq.text.includes('appropriate speed'))) pa.push('• Allocate specific time blocks for each topic and use a timer');
-        if (lowSQs.some(sq => sq.text.includes('time for questions'))) pa.push('• Build in 5-minute pauses every 20 minutes for questions');
-        if (lowSQs.some(sq => sq.text.includes('theory and practical'))) pa.push('• Alternate between theoretical explanation and hands-on application');
-        recommendations.push(`**Pacing (${score}/5)**\nStudents feel the course moves too quickly or too slowly.\n\nRecommended actions:\n${pa.join('\n')}\n\nWhy this matters: Poor pacing reduces learning outcomes and student engagement.`);
+      case 'mastery of subject':
+        const ma: string[] = [];
+        if (lowSQs.some(sq => sq.text.includes('deep knowledge'))) ma.push('• Review and update course materials to reflect current developments in the field');
+        if (lowSQs.some(sq => sq.text.includes('answers questions'))) ma.push('• Prepare thoroughly for each class and anticipate common student questions');
+        if (lowSQs.some(sq => sq.text.includes('real-world applications'))) ma.push('• Include more case studies and practical examples to demonstrate subject relevance');
+        recommendations.push(`**Mastery of Subject (${score}/5)**\nStudents perceive gaps in subject matter expertise or difficulty connecting theory to practice.\n\nRecommended actions:\n${ma.join('\n')}\n\nWhy this matters: Strong subject mastery builds student confidence and enhances learning.`);
         break;
-      case 'engagement':
-        const ea: string[] = [];
-        if (lowSQs.some(sq => sq.text.includes('interactive'))) ea.push('• Replace 10 minutes of lecture with active learning activities');
-        if (lowSQs.some(sq => sq.text.includes('participation'))) ea.push('• Use think-pair-share techniques to encourage participation');
-        if (lowSQs.some(sq => sq.text.includes('varied teaching'))) ea.push('• Incorporate case studies, group work, and multimedia');
-        recommendations.push(`**Engagement (${score}/5)**\nStudents report the learning environment feels passive.\n\nRecommended actions:\n${ea.join('\n')}\n\nWhy this matters: Passive learning leads to lower retention and motivation.`);
+      case 'punctuality':
+        const pu: string[] = [];
+        if (lowSQs.some(sq => sq.text.includes('starts and ends'))) pu.push('• Create detailed lesson plans with time allocations for each segment');
+        if (lowSQs.some(sq => sq.text.includes('returns graded'))) pu.push('• Establish a consistent grading timeline and communicate it to students');
+        if (lowSQs.some(sq => sq.text.includes('office hours'))) pu.push('• Maintain regular office hours and consider offering virtual alternatives');
+        recommendations.push(`**Punctuality (${score}/5)**\nStudents report issues with timeliness in class scheduling, feedback, and availability.\n\nRecommended actions:\n${pu.join('\n')}\n\nWhy this matters: Punctuality demonstrates respect for students' time and supports their academic success.`);
         break;
-      case 'assessment fairness':
-        const aa: string[] = [];
-        if (lowSQs.some(sq => sq.text.includes('learning objectives'))) aa.push('• Map each assessment to specific learning objectives and share with students');
-        if (lowSQs.some(sq => sq.text.includes('transparent'))) aa.push('• Provide detailed rubrics before assignments');
-        if (lowSQs.some(sq => sq.text.includes('timely feedback'))) aa.push('• Return graded work within 1 week with specific comments');
-        recommendations.push(`**Assessment Fairness (${score}/5)**\nStudents perceive assessments as misaligned or grading as inconsistent.\n\nRecommended actions:\n${aa.join('\n')}\n\nWhy this matters: Unclear evaluation undermines trust and focuses students on gaming the system.`);
-        break;
-      case 'workload':
-        const wa: string[] = [];
-        if (lowSQs.some(sq => sq.text.includes('reasonable'))) wa.push('• Audit assignment scope: ensure 2-3 hours of work per credit hour per week');
-        if (lowSQs.some(sq => sq.text.includes('deadlines'))) wa.push('• Stagger major deadlines across the semester');
-        if (lowSQs.some(sq => sq.text.includes('balance'))) wa.push('• Coordinate with other instructors to distribute workload evenly');
-        recommendations.push(`**Workload (${score}/5)**\nStudents report course demands exceed reasonable expectations.\n\nRecommended actions:\n${wa.join('\n')}\n\nWhy this matters: Excessive workload forces surface-level learning over deep comprehension.`);
+      case 'professionalism':
+        const pr: string[] = [];
+        if (lowSQs.some(sq => sq.text.includes('respectful and professional'))) pr.push('• Review communication guidelines and ensure consistent, respectful interactions');
+        if (lowSQs.some(sq => sq.text.includes('fairness and integrity'))) pr.push('• Apply policies consistently and transparently across all students');
+        if (lowSQs.some(sq => sq.text.includes('commitment to student'))) pr.push('• Increase availability for student support and demonstrate investment in their success');
+        recommendations.push(`**Professionalism (${score}/5)**\nStudents report concerns about professional conduct, fairness, or commitment to student success.\n\nRecommended actions:\n${pr.join('\n')}\n\nWhy this matters: Professionalism builds trust and creates a positive learning environment.`);
         break;
       default:
         recommendations.push(`**${name} (${score}/5)**\nThis area scored below benchmark. Review sub-question feedback to identify patterns.`);
