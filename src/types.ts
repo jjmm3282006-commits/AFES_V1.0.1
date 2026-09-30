@@ -30,10 +30,25 @@ export interface Faculty {
   lastReminderSent?: string;
 }
 
+export interface Program {
+  id: string;
+  name: string;
+  department: string;
+}
+
+export interface Subject {
+  id: string;
+  code: string;
+  name: string;
+  programId: string;
+  facultyId: string;
+}
+
 export interface Student {
   id: string;
   name: string;
-  enrolledCourses: string[];
+  programId: string;
+  enrolledSubjects: string[];
 }
 
 export interface Dean {

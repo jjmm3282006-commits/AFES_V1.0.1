@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { User, Faculty, Student, Dean, EvaluationCycle, Criterion, SubQuestion, Evaluation, AuditLogEntry, RateLimitEntry, FacultyMetrics, EventType, TrainingRecommendation, Dispute } from './types';
+import type { User, Faculty, Student, Dean, EvaluationCycle, Criterion, SubQuestion, Evaluation, AuditLogEntry, RateLimitEntry, FacultyMetrics, EventType, TrainingRecommendation, Dispute, Program, Subject } from './types';
 import { saveToLocalStorage, loadFromLocalStorage, clearLocalStorage } from './utils/persistence';
 
 const BENCHMARK = 3.0;
@@ -38,19 +38,48 @@ const FACULTY_SEED: Faculty[] = [
   { id: 'F008', name: 'Dr. David Martinez', department: 'Physics', title: 'Assistant Professor', courses: ['PHYS201'], acknowledgmentStatus: 'pending_review' },
 ];
 
+const PROGRAMS_SEED: Program[] = [
+  { id: 'BSCS', name: 'BS Computer Science', department: 'Computer Science' },
+  { id: 'BSMATH', name: 'BS Mathematics', department: 'Mathematics' },
+  { id: 'BSPHYS', name: 'BS Physics', department: 'Physics' },
+];
+
+const SUBJECTS_SEED: Subject[] = [
+  // Computer Science subjects
+  { id: 'CS101', code: 'CS101', name: 'Introduction to Programming', programId: 'BSCS', facultyId: 'F001' },
+  { id: 'CS150', code: 'CS150', name: 'Digital Logic Design', programId: 'BSCS', facultyId: 'F006' },
+  { id: 'CS201', code: 'CS201', name: 'Data Structures', programId: 'BSCS', facultyId: 'F001' },
+  { id: 'CS250', code: 'CS250', name: 'Computer Organization', programId: 'BSCS', facultyId: 'F006' },
+  { id: 'CS301', code: 'CS301', name: 'Algorithms', programId: 'BSCS', facultyId: 'F001' },
+  { id: 'CS350', code: 'CS350', name: 'Software Engineering', programId: 'BSCS', facultyId: 'F002' },
+  { id: 'CS401', code: 'CS401', name: 'Database Systems', programId: 'BSCS', facultyId: 'F002' },
+  
+  // Mathematics subjects
+  { id: 'MATH101', code: 'MATH101', name: 'Calculus I', programId: 'BSMATH', facultyId: 'F003' },
+  { id: 'MATH150', code: 'MATH150', name: 'Discrete Mathematics', programId: 'BSMATH', facultyId: 'F007' },
+  { id: 'MATH201', code: 'MATH201', name: 'Calculus II', programId: 'BSMATH', facultyId: 'F003' },
+  { id: 'MATH250', code: 'MATH250', name: 'Linear Algebra', programId: 'BSMATH', facultyId: 'F007' },
+  { id: 'MATH301', code: 'MATH301', name: 'Differential Equations', programId: 'BSMATH', facultyId: 'F004' },
+  
+  // Physics subjects
+  { id: 'PHYS101', code: 'PHYS101', name: 'General Physics I', programId: 'BSPHYS', facultyId: 'F005' },
+  { id: 'PHYS201', code: 'PHYS201', name: 'Modern Physics', programId: 'BSPHYS', facultyId: 'F008' },
+  { id: 'PHYS301', code: 'PHYS301', name: 'Quantum Mechanics', programId: 'BSPHYS', facultyId: 'F005' },
+];
+
 const STUDENTS_SEED: Student[] = [
-  { id: 'C24-001', name: 'Alice Johnson', enrolledCourses: ['CS101', 'MATH101', 'PHYS101'] },
-  { id: 'C24-002', name: 'Bob Smith', enrolledCourses: ['CS101', 'CS201', 'MATH101'] },
-  { id: 'C24-003', name: 'Carol Davis', enrolledCourses: ['CS201', 'MATH201', 'PHYS101'] },
-  { id: 'C24-004', name: 'David Lee', enrolledCourses: ['CS301', 'MATH201', 'PHYS301'] },
-  { id: 'C24-005', name: 'Emma Wilson', enrolledCourses: ['CS101', 'CS301', 'PHYS101'] },
-  { id: 'C24-006', name: 'Frank Brown', enrolledCourses: ['CS401', 'MATH101', 'PHYS101'] },
-  { id: 'C24-007', name: 'Grace Taylor', enrolledCourses: ['CS350', 'MATH201', 'PHYS301'] },
-  { id: 'C24-008', name: 'Henry Martinez', enrolledCourses: ['CS201', 'CS401', 'MATH301'] },
-  { id: 'C24-009', name: 'Ivy Anderson', enrolledCourses: ['CS301', 'MATH101', 'PHYS101'] },
-  { id: 'C24-010', name: 'Jack Thomas', enrolledCourses: ['CS350', 'MATH301', 'PHYS301'] },
-  { id: 'C24-011', name: 'Karen White', enrolledCourses: ['CS101', 'CS201', 'MATH201'] },
-  { id: 'C24-012', name: 'Laura Palmer', enrolledCourses: ['CS401', 'MATH101', 'PHYS101'] },
+  { id: 'C24-001', name: 'Alice Johnson', programId: 'BSCS', enrolledSubjects: ['CS101', 'CS201', 'MATH101'] },
+  { id: 'C24-002', name: 'Bob Smith', programId: 'BSCS', enrolledSubjects: ['CS101', 'CS150', 'CS201'] },
+  { id: 'C24-003', name: 'Carol Davis', programId: 'BSCS', enrolledSubjects: ['CS201', 'CS250', 'MATH201'] },
+  { id: 'C24-004', name: 'David Lee', programId: 'BSCS', enrolledSubjects: ['CS301', 'CS350', 'MATH201'] },
+  { id: 'C24-005', name: 'Emma Wilson', programId: 'BSCS', enrolledSubjects: ['CS101', 'CS301', 'PHYS101'] },
+  { id: 'C24-006', name: 'Frank Brown', programId: 'BSCS', enrolledSubjects: ['CS401', 'MATH101', 'PHYS101'] },
+  { id: 'C24-007', name: 'Grace Taylor', programId: 'BSMATH', enrolledSubjects: ['MATH150', 'MATH201', 'PHYS101'] },
+  { id: 'C24-008', name: 'Henry Martinez', programId: 'BSMATH', enrolledSubjects: ['MATH201', 'MATH250', 'MATH301'] },
+  { id: 'C24-009', name: 'Ivy Anderson', programId: 'BSMATH', enrolledSubjects: ['MATH101', 'MATH201', 'PHYS101'] },
+  { id: 'C24-010', name: 'Jack Thomas', programId: 'BSPHYS', enrolledSubjects: ['PHYS101', 'PHYS201', 'MATH301'] },
+  { id: 'C24-011', name: 'Karen White', programId: 'BSPHYS', enrolledSubjects: ['PHYS101', 'PHYS301', 'MATH201'] },
+  { id: 'C24-012', name: 'Laura Palmer', programId: 'BSPHYS', enrolledSubjects: ['PHYS201', 'PHYS301', 'MATH101'] },
 ];
 
 const DEANS_SEED: Dean[] = [
