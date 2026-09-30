@@ -367,6 +367,17 @@ class DataStore {
     this.emit('criteria_changed');
   }
 
+  async updateSubQuestion(sqId: string, newText: string): Promise<void> {
+    await this.simulateLatency();
+    const sq = this.subQuestions.find(s => s.id === sqId);
+    if (!sq) return;
+    const oldText = sq.text;
+    const crit = this.criteria.find(c => c.id === sq.criterionId);
+    sq.text = newText;
+    this.addAuditLog('admin', 'subquestion_edited', sqId, `Edited sub-question in "${crit?.name}": "${oldText}" → "${newText}"`);
+    this.emit('criteria_changed');
+  }
+
   getEvaluations(): Evaluation[] { return [...this.evaluations]; }
   getEvaluationsForFaculty(facultyId: string, cycleId?: string, courseId?: string): Evaluation[] {
     return this.evaluations.filter(e => e.facultyId === facultyId && (!cycleId || e.cycleId === cycleId) && (!courseId || e.courseId === courseId));
