@@ -22,8 +22,6 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showSignModal, setShowSignModal] = useState(false);
   const [signPassword, setSignPassword] = useState('');
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
-  const [generatingAI, setGeneratingAI] = useState(false);
   const [pieChartView, setPieChartView] = useState<string>('overall');
 
   const facultyId = user?.facultyId || 'F001';
@@ -50,31 +48,27 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
     setShowSignModal(false); setSignPassword('');
   };
 
-  const generateAISummary = async () => {
-    if (!metrics) return;
-    setGeneratingAI(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
+  // Dynamic summary that updates automatically based on current data
+  const performanceSummary = metrics ? (() => {
     const lowCriteria = criteria.filter(c => (metrics.criteriaAverages[c.id] || 0) < BENCHMARK);
     const highCriteria = criteria.filter(c => (metrics.criteriaAverages[c.id] || 0) >= 4);
     
-    let summary = `Based on ${metrics.totalSubmissions} evaluations, your overall performance is ${metrics.overallAverage.toFixed(2)}/5.0.\n\n`;
+    let summary = `Based on ${metrics.totalSubmissions} evaluations, your overall performance is ${metrics.overallAverage.toFixed(2)}/5.0. `;
     
     if (highCriteria.length > 0) {
-      summary += `**Strengths:** You excel in ${highCriteria.map(c => c.name).join(', ')}.\n\n`;
+      summary += `You excel in ${highCriteria.map(c => c.name).join(', ')}. `;
     }
     
     if (lowCriteria.length > 0) {
-      summary += `**Areas for Improvement:** ${lowCriteria.map(c => c.name).join(', ')} scored below the ${BENCHMARK.toFixed(1)}/5.0 benchmark.\n\n`;
+      summary += `Areas for improvement: ${lowCriteria.map(c => c.name).join(', ')} scored below the ${BENCHMARK.toFixed(1)}/5.0 benchmark. `;
     }
     
     const excellentCount = metrics.scoreDistribution[4];
     const poorCount = metrics.scoreDistribution[0] + metrics.scoreDistribution[1];
-    summary += `**Response Distribution:** ${excellentCount} students rated you 5★ (excellent), ${poorCount} rated you 1-2★ (needs improvement).`;
+    summary += `${excellentCount} students rated you 5★ (excellent), ${poorCount} rated you 1-2★ (needs improvement).`;
     
-    setAiSummary(summary);
-    setGeneratingAI(false);
-  };
+    return summary;
+  })() : '';
 
   const criteriaBarData = criteria.map(c => ({ name: c.name, score: metrics?.criteriaAverages[c.id] || 0 }));
   
@@ -195,13 +189,8 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
           </div>
         </div>
         <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#F8F6F1' }}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: '#002366' }}><TrendingUp size={16} style={{ color: '#B87333' }} />AI Performance Summary</h3>
-            <button onClick={generateAISummary} disabled={generatingAI} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#B87333' }}>{generatingAI ? 'Generating...' : 'Generate Summary'}</button>
-          </div>
-          {aiSummary && <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#1A1A1A' }}>{aiSummary}</p>}
-          {!aiSummary && !generatingAI && <p className="text-sm italic" style={{ color: '#9CA3AF' }}>Click "Generate Summary" for AI-powered performance insights.</p>}
-          {generatingAI && <div className="flex items-center gap-2"><div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: '#002366', borderTopColor: 'transparent' }} /><span className="text-sm" style={{ color: '#4B5563' }}>Analyzing evaluation data...</span></div>}
+          <h3 className="text-sm font-semibold flex items-center gap-2 mb-3" style={{ color: '#002366' }}><TrendingUp size={16} style={{ color: '#B87333' }} />Performance Summary</h3>
+          <p className="text-sm leading-relaxed" style={{ color: '#1A1A1A' }}>{performanceSummary}</p>
         </div>
         {lowCriteria.length > 0 && (<div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#FEE2E2', border: '1px solid #C41E3A' }}><h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#C41E3A' }}><AlertTriangle size={16} />Training Needs Analysis (Below Benchmark {BENCHMARK.toFixed(1)})</h3>{trainingRec ? (<div className="p-3 rounded-lg bg-white/50"><p className="text-xs font-medium mb-2" style={{ color: '#B87333' }}>✦ AI-Generated Recommendation{trainingRec.editedByAdmin ? ' (Admin-Edited)' : ''}</p><p className="text-xs leading-relaxed whitespace-pre-wrap">{trainingRec.recommendation}</p></div>) : (<p className="text-xs" style={{ color: '#4B5563' }}>HR will generate a personalized training recommendation.</p>)}</div>)}
         <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8', border: `2px solid ${faculty?.acknowledgmentStatus === 'acknowledged' ? '#2E8B57' : '#B87333'}` }}>
