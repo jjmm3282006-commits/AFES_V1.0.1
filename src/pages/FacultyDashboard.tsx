@@ -26,6 +26,7 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
 
   const facultyId = user?.facultyId || 'F001';
   const faculty = store.getFacultyById(facultyId);
+  const facultyCourses = store.getFacultyCourses(facultyId);
   const activeCycle = store.getActiveCycle();
   const cycleId = viewingCycleId || activeCycle?.id;
   const allCycles = store.getCycles();
@@ -118,7 +119,7 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
           <button onClick={loadData} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#002366' }}><RefreshCw size={16} className={loading ? 'animate-spin' : ''} />Refresh</button>
         </div>
       </div>
-      <div className="flex items-center gap-2"><label className="text-sm font-medium">Course:</label><select value={courseFilter} onChange={e => setCourseFilter(e.target.value)} className="px-3 py-1.5 rounded-lg border text-sm outline-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }}><option value="all">All Courses</option>{faculty?.courses.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+      <div className="flex items-center gap-2"><label className="text-sm font-medium">Course:</label><select value={courseFilter} onChange={e => setCourseFilter(e.target.value)} className="px-3 py-1.5 rounded-lg border text-sm outline-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }}><option value="all">All Courses</option>{facultyCourses.map(c => <option key={c} value={c}>{c}</option>)}</select></div>
       {belowThreshold && (<div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#F8F6F1', border: '2px dashed #B87333' }}><Shield size={48} className="mx-auto mb-3" style={{ color: '#B87333' }} /><h3 className="text-lg font-semibold mb-2" style={{ color: '#002366' }}>Insufficient Data</h3><p className="text-sm" style={{ color: '#4B5563' }}>{metrics ? `${THRESHOLD - metrics.totalSubmissions} more submissions needed` : 'Loading...'}</p></div>)}
       {metrics && !belowThreshold && (<>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -139,7 +140,7 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
               <div className="relative" style={{ zIndex: 10 }}>
                 <select value={pieChartView} onChange={e => setPieChartView(e.target.value)} className="px-2 py-1 rounded-lg border text-xs outline-none appearance-none pr-6 cursor-pointer" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }}>
                   <option value="overall">Overall</option>
-                  {faculty?.courses.map(c => <option key={c} value={c}>{c}</option>)}
+                  {facultyCourses.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: '#4B5563' }}>
                   <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>

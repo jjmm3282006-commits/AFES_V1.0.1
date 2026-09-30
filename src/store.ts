@@ -265,6 +265,10 @@ class DataStore {
   getFaculty(): Faculty[] { return JSON.parse(JSON.stringify(this.faculty)); }
   getFacultyById(id: string): Faculty | undefined { return this.faculty.find(f => f.id === id); }
   getFacultyByDepartment(dept: string): Faculty[] { return this.faculty.filter(f => f.department === dept); }
+  getFacultyCourses(facultyId: string): string[] {
+    const faculty = this.faculty.find(f => f.id === facultyId);
+    return faculty ? [...faculty.courses] : [];
+  }
 
   async acknowledgeFaculty(facultyId: string, verifiedBy: string): Promise<void> {
     await this.simulateLatency();
