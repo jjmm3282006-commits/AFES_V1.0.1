@@ -29,6 +29,9 @@ const FACULTY_SEED: Faculty[] = [
   { id: 'F003', name: 'Dr. Maria Garcia', department: 'Mathematics', title: 'Assistant Professor', courses: ['MATH101', 'MATH201'], acknowledgmentStatus: 'pending_review' },
   { id: 'F004', name: 'Dr. Robert Kim', department: 'Mathematics', title: 'Professor', courses: ['MATH301'], acknowledgmentStatus: 'pending_review' },
   { id: 'F005', name: 'Dr. Emily Thompson', department: 'Physics', title: 'Associate Professor', courses: ['PHYS101', 'PHYS301'], acknowledgmentStatus: 'pending_acknowledgment' },
+  { id: 'F006', name: 'Dr. Michael Brown', department: 'Computer Science', title: 'Assistant Professor', courses: ['CS150', 'CS250'], acknowledgmentStatus: 'acknowledged', acknowledgedAt: '2026-03-12T09:15:00Z', acknowledgedBy: 'F006' },
+  { id: 'F007', name: 'Dr. Lisa Anderson', department: 'Mathematics', title: 'Associate Professor', courses: ['MATH150', 'MATH250'], acknowledgmentStatus: 'pending_acknowledgment' },
+  { id: 'F008', name: 'Dr. David Martinez', department: 'Physics', title: 'Assistant Professor', courses: ['PHYS201'], acknowledgmentStatus: 'pending_review' },
 ];
 
 const STUDENTS_SEED: Student[] = [
@@ -161,9 +164,49 @@ function generateSeedEvaluations(): Evaluation[] {
     evals.push({ id: uuidv4(), facultyId: 'F005', courseId: FACULTY_SEED[4].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 9) % feedbacks.length], submittedAt: new Date(2026, 2, 15 + i).toISOString() });
   }
 
-  // Completed cycle (cyc-003) - 8 evaluations
-  for (let i = 0; i < 8; i++) {
-    const facultyIdx = i % 5;
+  // F006 - Dr. Michael Brown - Good performer (13 subs, avg ~4.0)
+  const f006BaseRatings: Record<string, number> = {
+    'sq-clarity-1': 4, 'sq-clarity-2': 4, 'sq-clarity-3': 4,
+    'sq-pacing-1': 4, 'sq-pacing-2': 4, 'sq-pacing-3': 4,
+    'sq-engagement-1': 4, 'sq-engagement-2': 4, 'sq-engagement-3': 4,
+    'sq-assessment-1': 4, 'sq-assessment-2': 4, 'sq-assessment-3': 4,
+    'sq-workload-1': 4, 'sq-workload-2': 4, 'sq-workload-3': 4,
+  };
+  for (let i = 0; i < 13; i++) {
+    const ratings = createDeterministicRatings(f006BaseRatings);
+    if (i % 4 === 0) { ratings['sq-engagement-1'] = 3; ratings['sq-engagement-2'] = 3; }
+    evals.push({ id: uuidv4(), facultyId: 'F006', courseId: FACULTY_SEED[5].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2026, 2, 8 + i).toISOString() });
+  }
+
+  // F007 - Dr. Lisa Anderson - Mid performer (11 subs, avg ~3.5)
+  const f007BaseRatings: Record<string, number> = {
+    'sq-clarity-1': 4, 'sq-clarity-2': 3, 'sq-clarity-3': 4,
+    'sq-pacing-1': 3, 'sq-pacing-2': 4, 'sq-pacing-3': 3,
+    'sq-engagement-1': 3, 'sq-engagement-2': 4, 'sq-engagement-3': 3,
+    'sq-assessment-1': 4, 'sq-assessment-2': 3, 'sq-assessment-3': 4,
+    'sq-workload-1': 3, 'sq-workload-2': 4, 'sq-workload-3': 3,
+  };
+  for (let i = 0; i < 11; i++) {
+    const ratings = createDeterministicRatings(f007BaseRatings);
+    evals.push({ id: uuidv4(), facultyId: 'F007', courseId: FACULTY_SEED[6].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 1) % feedbacks.length], submittedAt: new Date(2026, 2, 10 + i).toISOString() });
+  }
+
+  // F008 - Dr. David Martinez - Below threshold (6 subs, avg ~3.8)
+  const f008BaseRatings: Record<string, number> = {
+    'sq-clarity-1': 4, 'sq-clarity-2': 4, 'sq-clarity-3': 3,
+    'sq-pacing-1': 4, 'sq-pacing-2': 3, 'sq-pacing-3': 4,
+    'sq-engagement-1': 4, 'sq-engagement-2': 4, 'sq-engagement-3': 3,
+    'sq-assessment-1': 4, 'sq-assessment-2': 4, 'sq-assessment-3': 4,
+    'sq-workload-1': 3, 'sq-workload-2': 4, 'sq-workload-3': 4,
+  };
+  for (let i = 0; i < 6; i++) {
+    const ratings = createDeterministicRatings(f008BaseRatings);
+    evals.push({ id: uuidv4(), facultyId: 'F008', courseId: 'PHYS201', cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 4) % feedbacks.length], submittedAt: new Date(2026, 2, 14 + i).toISOString() });
+  }
+
+  // Completed cycle (cyc-003) - 12 evaluations
+  for (let i = 0; i < 12; i++) {
+    const facultyIdx = i % 8;
     const baseRatings: Record<string, number> = {
       'sq-clarity-1': 4, 'sq-clarity-2': 3, 'sq-clarity-3': 4,
       'sq-pacing-1': 3, 'sq-pacing-2': 4, 'sq-pacing-3': 3,
@@ -175,9 +218,9 @@ function generateSeedEvaluations(): Evaluation[] {
     evals.push({ id: uuidv4(), facultyId: FACULTY_SEED[facultyIdx].id, courseId: FACULTY_SEED[facultyIdx].courses[0], cycleId: 'cyc-003', ratings, feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2025, 11, 5 + i).toISOString() });
   }
 
-  // Archived cycle (cyc-004) - 6 evaluations
-  for (let i = 0; i < 6; i++) {
-    const facultyIdx = i % 5;
+  // Archived cycle (cyc-004) - 10 evaluations
+  for (let i = 0; i < 10; i++) {
+    const facultyIdx = i % 8;
     const baseRatings: Record<string, number> = {
       'sq-clarity-1': 3, 'sq-clarity-2': 4, 'sq-clarity-3': 3,
       'sq-pacing-1': 4, 'sq-pacing-2': 3, 'sq-pacing-3': 4,
@@ -281,6 +324,18 @@ class DataStore {
       this.trainingRecommendations = persistedData.trainingRecommendations || this.trainingRecommendations;
       this.disputes = persistedData.disputes || this.disputes;
       this.addAuditLog('system', 'data_restored', 'DataStore', 'Data restored from localStorage');
+      
+      // Demo: Reset some faculty acknowledgment statuses on refresh
+      // This allows users to see the full acknowledgment workflow
+      const facultyToReset = ['F002', 'F006']; // Reset these faculty to pending_acknowledgment
+      facultyToReset.forEach(facultyId => {
+        const faculty = this.faculty.find(f => f.id === facultyId);
+        if (faculty && faculty.acknowledgmentStatus === 'acknowledged') {
+          faculty.acknowledgmentStatus = 'pending_acknowledgment';
+          faculty.acknowledgedAt = undefined;
+          faculty.acknowledgedBy = undefined;
+        }
+      });
     } else {
       this.addAuditLog('system', 'system_init', 'DataStore', `System initialized — Faculty: ${FACULTY_SEED.length}, Students: ${STUDENTS_SEED.length}, Deans: ${DEANS_SEED.length}, Cycles: ${CYCLES_SEED.length}, Criteria: ${CRITERIA_SEED.length}, Sub-Questions: ${SUB_QUESTIONS.length}, Seed Evaluations: ${this.evaluations.length}`);
     }
