@@ -24,6 +24,7 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
   const [signPassword, setSignPassword] = useState('');
   const [aiSummary, setAiSummary] = useState<string | null>(null);
   const [generatingAI, setGeneratingAI] = useState(false);
+  const [pieChartView, setPieChartView] = useState<string>('overall');
 
   const facultyId = user?.facultyId || 'F001';
   const faculty = store.getFacultyById(facultyId);
@@ -76,13 +77,35 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
   };
 
   const criteriaBarData = criteria.map(c => ({ name: c.name, score: metrics?.criteriaAverages[c.id] || 0 }));
-  const totalRatings = metrics ? metrics.scoreDistribution.reduce((a, b) => a + b, 0) : 0;
-  const donutData = metrics ? [
-    { name: '9-10', value: metrics.scoreDistribution[8] + metrics.scoreDistribution[9], percentage: totalRatings > 0 ? (((metrics.scoreDistribution[8] + metrics.scoreDistribution[9]) / totalRatings) * 100).toFixed(1) : '0' },
-    { name: '6-8', value: metrics.scoreDistribution[5] + metrics.scoreDistribution[6] + metrics.scoreDistribution[7], percentage: totalRatings > 0 ? (((metrics.scoreDistribution[5] + metrics.scoreDistribution[6] + metrics.scoreDistribution[7]) / totalRatings) * 100).toFixed(1) : '0' },
-    { name: '4-5', value: metrics.scoreDistribution[3] + metrics.scoreDistribution[4], percentage: totalRatings > 0 ? (((metrics.scoreDistribution[3] + metrics.scoreDistribution[4]) / totalRatings) * 100).toFixed(1) : '0' },
-    { name: '1-3', value: metrics.scoreDistribution[0] + metrics.scoreDistribution[1] + metrics.scoreDistribution[2], percentage: totalRatings > 0 ? (((metrics.scoreDistribution[0] + metrics.scoreDistribution[1] + metrics.scoreDistribution[2]) / totalRatings) * 100).toFixed(1) : '0' },
-  ] : [];
+  
+  // Helper function to calculate score distribution for a specific course
+  const getScoreDistribution = (courseId?: string) => {
+    if (!metrics) return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    if (!courseId || courseId === 'all') return metrics.scoreDistribution;
+    
+    // Calculate per-course distribution from evaluations
+    const evals = store.getEvaluationsForFaculty(facultyId, cycleId, courseId);
+    const dist = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    evals.forEach(ev => {
+      Object.values(ev.ratings).forEach(rating => {
+        if (rating >= 1 && rating <= 10) dist[rating - 1]++;
+      });
+    });
+    return dist;
+  };
+  
+  const currentDistribution = getScoreDistribution(pieChartView);
+  const totalRatings = currentDistribution.reduce((a, b) => a + b, 0);
+  const currentAverage = totalRatings > 0 
+    ? currentDistribution.reduce((sum, count, idx) => sum + count * (idx + 1), 0) / totalRatings 
+    : 0;
+  
+  const donutData = [
+    { name: '9-10', value: currentDistribution[8] + currentDistribution[9], percentage: totalRatings > 0 ? (((currentDistribution[8] + currentDistribution[9]) / totalRatings) * 100).toFixed(1) : '0' },
+    { name: '6-8', value: currentDistribution[5] + currentDistribution[6] + currentDistribution[7], percentage: totalRatings > 0 ? (((currentDistribution[5] + currentDistribution[6] + currentDistribution[7]) / totalRatings) * 100).toFixed(1) : '0' },
+    { name: '4-5', value: currentDistribution[3] + currentDistribution[4], percentage: totalRatings > 0 ? (((currentDistribution[3] + currentDistribution[4]) / totalRatings) * 100).toFixed(1) : '0' },
+    { name: '1-3', value: currentDistribution[0] + currentDistribution[1] + currentDistribution[2], percentage: totalRatings > 0 ? (((currentDistribution[0] + currentDistribution[1] + currentDistribution[2]) / totalRatings) * 100).toFixed(1) : '0' },
+  ];
 
   const breakdownData = criteria.map(c => ({ criterion: c, subQuestions: subQuestions.filter(sq => sq.criterionId === c.id).map(sq => ({ sq, score: metrics?.subQuestionAverages[sq.id] || 0 })) }));
   const trainingRec = store.getTrainingRecommendationForFaculty(facultyId, cycleId);
@@ -115,9 +138,15 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
             {showBreakdown && (<div className="mt-3 space-y-3">{breakdownData.map(({ criterion, subQuestions: sqs }) => (<div key={criterion.id} className="rounded-lg p-3" style={{ backgroundColor: '#F8F6F1' }}><p className="text-xs font-bold mb-2" style={{ color: '#002366' }}>{criterion.name} (Avg: {(metrics.criteriaAverages[criterion.id] || 0).toFixed(2)})</p><div className="space-y-1.5">{sqs.map(({ sq, score }) => (<div key={sq.id} className="flex items-center gap-2"><span className="text-[10px] flex-1 truncate" style={{ color: '#4B5563' }}>{sq.text}</span><div className="w-20 h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#D5D8DC' }}><div className="h-full rounded-full" style={{ width: `${(score / 10) * 100}%`, backgroundColor: score >= BENCHMARK ? '#2E8B57' : '#C41E3A' }} /></div><span className="text-[10px] font-bold w-8 text-right" style={{ color: score >= BENCHMARK ? '#2E8B57' : '#C41E3A' }}>{score.toFixed(2)}</span></div>))}</div></div>))}</div>)}
           </div>
           <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><BarChart3 size={16} style={{ color: '#B87333' }} />Score Distribution</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: '#002366' }}><BarChart3 size={16} style={{ color: '#B87333' }} />Score Distribution</h3>
+              <select value={pieChartView} onChange={e => setPieChartView(e.target.value)} className="px-2 py-1 rounded-lg border text-xs outline-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }}>
+                <option value="overall">Overall</option>
+                {faculty?.courses.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
             <div className="flex items-center gap-4">
-              <div className="relative"><ResponsiveContainer width={180} height={180}><PieChart><Pie data={donutData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={2}>{donutData.map((_, i) => (<Cell key={i} fill={PIE_COLORS[i]} />))}</Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: '#002366' }}>{metrics.overallAverage.toFixed(1)}</span><span className="text-[10px]" style={{ color: '#4B5563' }}>avg score</span></div></div>
+              <div className="relative"><ResponsiveContainer width={180} height={180}><PieChart><Pie data={donutData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={2}>{donutData.map((_, i) => (<Cell key={i} fill={PIE_COLORS[i]} />))}</Pie></PieChart></ResponsiveContainer><div className="absolute inset-0 flex flex-col items-center justify-center"><span className="text-xl font-bold" style={{ color: '#002366' }}>{currentAverage.toFixed(1)}</span><span className="text-[10px]" style={{ color: '#4B5563' }}>avg score</span></div></div>
               <div className="flex-1 space-y-1.5">{donutData.map((d, i) => (<div key={i} className="flex items-center gap-2 text-xs"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: PIE_COLORS[i] }} /><span>{d.name}</span><span className="font-bold">{d.value}</span><span style={{ color: '#9CA3AF' }}>({d.percentage}%)</span></div>))}</div>
             </div>
           </div>
