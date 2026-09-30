@@ -5,6 +5,7 @@ import { exportFacultyReport } from '../utils/excel';
 import type { FacultyMetrics, Criterion, SubQuestion } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, PieChart, Pie } from 'recharts';
 import { RefreshCw, Shield, BarChart3, MessageSquare, TrendingUp, BookOpen, ChevronDown, ChevronUp, Award, Printer, CheckCircle, AlertTriangle, Download } from 'lucide-react';
+import FacultyPrintReport from '../components/FacultyPrintReport';
 
 const COLORS = ['#002366', '#B87333', '#C41E3A', '#2E8B57', '#6366F1'];
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
@@ -237,6 +238,17 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
       {showSignModal && (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/50" onClick={() => setShowSignModal(false)} /><div className="relative w-full max-w-sm rounded-xl shadow-2xl p-6" style={{ backgroundColor: '#EDEBE8' }}><h3 className="text-lg font-semibold mb-2" style={{ color: '#002366' }}>Verify Identity</h3><p className="text-xs mb-4" style={{ color: '#4B5563' }}>Enter your password to acknowledge this report.</p><input type="password" value={signPassword} onChange={e => setSignPassword(e.target.value)} placeholder="Enter password" className="w-full px-3 py-2 rounded-lg border text-sm outline-none mb-2" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }} /><div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowSignModal(false)} className="px-3 py-1.5 rounded-lg text-sm border hover:bg-black/5" style={{ borderColor: '#D5D8DC' }}>Cancel</button><button onClick={handleSignOff} className="px-4 py-1.5 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#002366' }}>Confirm</button></div></div></div>)}
 
       {showDisputeModal && (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/50" onClick={() => setShowDisputeModal(false)} /><div className="relative w-full max-w-md rounded-xl shadow-2xl p-6" style={{ backgroundColor: '#EDEBE8' }}><h3 className="text-lg font-semibold mb-2" style={{ color: '#C41E3A' }}>Request Review / Raise Dispute</h3><p className="text-xs mb-4" style={{ color: '#4B5563' }}>Please provide a detailed justification for your dispute. This will be reviewed by HR/Admin.</p><textarea value={disputeJustification} onChange={e => setDisputeJustification(e.target.value)} placeholder="Explain why you are disputing the evaluation results..." className="w-full px-3 py-2 rounded-lg border text-sm outline-none mb-4 resize-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }} rows={6} /><div className="flex justify-end gap-2"><button onClick={() => setShowDisputeModal(false)} className="px-3 py-1.5 rounded-lg text-sm border hover:bg-black/5" style={{ borderColor: '#D5D8DC' }}>Cancel</button><button onClick={handleSubmitDispute} disabled={!disputeJustification.trim()} className="px-4 py-1.5 rounded-lg text-sm font-medium text-white hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#C41E3A' }}>Submit Dispute</button></div></div></div>)}
+      
+      {/* Print Report - Only visible when printing */}
+      {metrics && (
+        <FacultyPrintReport
+          facultyId={facultyId}
+          metrics={metrics}
+          criteria={criteria}
+          subQuestions={subQuestions}
+          cycleName={viewingCycle?.displayName || 'Current Cycle'}
+        />
+      )}
     </div>
   );
 }
