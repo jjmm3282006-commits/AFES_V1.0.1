@@ -23,6 +23,8 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
   const [showSignModal, setShowSignModal] = useState(false);
   const [signPassword, setSignPassword] = useState('');
   const [pieChartView, setPieChartView] = useState<string>('overall');
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
+  const [disputeJustification, setDisputeJustification] = useState('');
 
   const facultyId = user?.facultyId || 'F001';
   const faculty = store.getFacultyById(facultyId);
@@ -47,6 +49,13 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
     if (signPassword !== 'faculty') return;
     await store.acknowledgeFaculty(facultyId, facultyId);
     setShowSignModal(false); setSignPassword('');
+  };
+
+  const handleSubmitDispute = async () => {
+    if (!disputeJustification.trim()) return;
+    await store.submitDispute(facultyId, cycleId || '', disputeJustification);
+    setShowDisputeModal(false);
+    setDisputeJustification('');
   };
 
   // Dynamic summary that updates automatically based on current data
@@ -194,15 +203,40 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
           <p className="text-sm leading-relaxed" style={{ color: '#1A1A1A' }}>{performanceSummary}</p>
         </div>
         {lowCriteria.length > 0 && (<div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#FEE2E2', border: '1px solid #C41E3A' }}><h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#C41E3A' }}><AlertTriangle size={16} />Training Needs Analysis (Below Benchmark {BENCHMARK.toFixed(1)})</h3>{trainingRec ? (<div className="p-3 rounded-lg bg-white/50"><p className="text-xs font-medium mb-2" style={{ color: '#B87333' }}>✦ AI-Generated Recommendation{trainingRec.editedByAdmin ? ' (Admin-Edited)' : ''}</p><p className="text-xs leading-relaxed whitespace-pre-wrap">{trainingRec.recommendation}</p></div>) : (<p className="text-xs" style={{ color: '#4B5563' }}>HR will generate a personalized training recommendation.</p>)}</div>)}
-        <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8', border: `2px solid ${faculty?.acknowledgmentStatus === 'acknowledged' ? '#2E8B57' : '#B87333'}` }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: faculty?.acknowledgmentStatus === 'acknowledged' ? '#D1FAE5' : '#F5E6D3' }}>{faculty?.acknowledgmentStatus === 'acknowledged' ? <CheckCircle size={20} style={{ color: '#2E8B57' }} /> : <Award size={20} style={{ color: '#B87333' }} />}</div><div><p className="text-sm font-semibold" style={{ color: '#002366' }}>Evaluation Acknowledgment</p><p className="text-xs" style={{ color: '#4B5563' }}>Status: <span className="font-medium" style={{ color: faculty?.acknowledgmentStatus === 'acknowledged' ? '#2E8B57' : '#B87333' }}>{faculty?.acknowledgmentStatus === 'acknowledged' ? 'Acknowledged' : 'Pending Acknowledgment'}</span>{faculty?.acknowledgedAt && ` • ${new Date(faculty.acknowledgedAt).toLocaleString()}`}</p></div></div>
-            {faculty?.acknowledgmentStatus !== 'acknowledged' && (<button onClick={() => setShowSignModal(true)} className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#002366' }}>Sign & Acknowledge</button>)}
+        <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8', border: `2px solid ${faculty?.acknowledgmentStatus === 'acknowledged' ? '#2E8B57' : faculty?.acknowledgmentStatus === 'disputed' ? '#C41E3A' : '#B87333'}` }}>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: faculty?.acknowledgmentStatus === 'acknowledged' ? '#D1FAE5' : faculty?.acknowledgmentStatus === 'disputed' ? '#FEE2E2' : '#F5E6D3' }}>
+                {faculty?.acknowledgmentStatus === 'acknowledged' ? <CheckCircle size={20} style={{ color: '#2E8B57' }} /> : faculty?.acknowledgmentStatus === 'disputed' ? <AlertTriangle size={20} style={{ color: '#C41E3A' }} /> : <Award size={20} style={{ color: '#B87333' }} />}
+              </div>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: '#002366' }}>Evaluation Acknowledgment</p>
+                <p className="text-xs" style={{ color: '#4B5563' }}>
+                  Status: <span className="font-medium" style={{ color: faculty?.acknowledgmentStatus === 'acknowledged' ? '#2E8B57' : faculty?.acknowledgmentStatus === 'disputed' ? '#C41E3A' : '#B87333' }}>
+                    {faculty?.acknowledgmentStatus === 'acknowledged' ? '🟢 Acknowledged' : faculty?.acknowledgmentStatus === 'disputed' ? '🔴 Disputed' : faculty?.acknowledgmentStatus === 'pending_acknowledgment' ? '🟡 Pending Acknowledgment' : '🟡 Pending Review'}
+                  </span>
+                  {faculty?.acknowledgedAt && ` • ${new Date(faculty.acknowledgedAt).toLocaleString()}`}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {faculty?.acknowledgmentStatus !== 'acknowledged' && faculty?.acknowledgmentStatus !== 'disputed' && (
+                <>
+                  <button onClick={() => setShowSignModal(true)} className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#002366' }}>Sign & Acknowledge</button>
+                  <button onClick={() => setShowDisputeModal(true)} className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#C41E3A' }}>Request Review</button>
+                </>
+              )}
+              {faculty?.acknowledgmentStatus === 'disputed' && (
+                <span className="px-3 py-2 rounded-lg text-sm font-medium" style={{ backgroundColor: '#FEE2E2', color: '#C41E3A' }}>Dispute Under Review</span>
+              )}
+            </div>
           </div>
         </div>
         <div className="rounded-xl shadow-sm" style={{ backgroundColor: '#EDEBE8' }}><button onClick={() => setShowFeedback(!showFeedback)} className="w-full p-4 flex items-center justify-between text-left"><h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: '#002366' }}><MessageSquare size={16} style={{ color: '#B87333' }} />Student Feedback ({metrics.feedback.length} entries)</h3><span className="text-xs font-medium px-2 py-1 rounded" style={{ backgroundColor: '#F5E6D3', color: '#B87333' }}>{showFeedback ? 'Hide' : 'Show'}</span></button>{showFeedback && (<div className="px-4 pb-4 space-y-2">{metrics.feedback.map((fb, i) => (<div key={i} className="p-3 rounded-lg text-sm" style={{ backgroundColor: '#F8F6F1' }}><p>{fb.feedback}</p><p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{fb.courseId} • {new Date(fb.submittedAt).toLocaleDateString()}</p></div>))}</div>)}</div>
       </>)}
       {showSignModal && (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/50" onClick={() => setShowSignModal(false)} /><div className="relative w-full max-w-sm rounded-xl shadow-2xl p-6" style={{ backgroundColor: '#EDEBE8' }}><h3 className="text-lg font-semibold mb-2" style={{ color: '#002366' }}>Verify Identity</h3><p className="text-xs mb-4" style={{ color: '#4B5563' }}>Enter your password to acknowledge this report.</p><input type="password" value={signPassword} onChange={e => setSignPassword(e.target.value)} placeholder="Enter password" className="w-full px-3 py-2 rounded-lg border text-sm outline-none mb-2" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }} /><div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowSignModal(false)} className="px-3 py-1.5 rounded-lg text-sm border hover:bg-black/5" style={{ borderColor: '#D5D8DC' }}>Cancel</button><button onClick={handleSignOff} className="px-4 py-1.5 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#002366' }}>Confirm</button></div></div></div>)}
+
+      {showDisputeModal && (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/50" onClick={() => setShowDisputeModal(false)} /><div className="relative w-full max-w-md rounded-xl shadow-2xl p-6" style={{ backgroundColor: '#EDEBE8' }}><h3 className="text-lg font-semibold mb-2" style={{ color: '#C41E3A' }}>Request Review / Raise Dispute</h3><p className="text-xs mb-4" style={{ color: '#4B5563' }}>Please provide a detailed justification for your dispute. This will be reviewed by HR/Admin.</p><textarea value={disputeJustification} onChange={e => setDisputeJustification(e.target.value)} placeholder="Explain why you are disputing the evaluation results..." className="w-full px-3 py-2 rounded-lg border text-sm outline-none mb-4 resize-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }} rows={6} /><div className="flex justify-end gap-2"><button onClick={() => setShowDisputeModal(false)} className="px-3 py-1.5 rounded-lg text-sm border hover:bg-black/5" style={{ borderColor: '#D5D8DC' }}>Cancel</button><button onClick={handleSubmitDispute} disabled={!disputeJustification.trim()} className="px-4 py-1.5 rounded-lg text-sm font-medium text-white hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#C41E3A' }}>Submit Dispute</button></div></div></div>)}
     </div>
   );
 }

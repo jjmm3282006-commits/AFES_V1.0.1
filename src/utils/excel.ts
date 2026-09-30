@@ -34,14 +34,33 @@ export async function exportFacultyReport(facultyId: string, cycleId?: string): 
     coverSheet.columns = [{ width: 30 }, { width: 40 }];
     coverSheet.getRow(1).values = ['AFES Faculty Evaluation Report', ''];
     coverSheet.getRow(1).font = { bold: true, size: 16, color: { argb: 'FF002366' } };
-    coverSheet.getRow(3).values = ['Faculty Name', faculty.name];
-    coverSheet.getRow(4).values = ['Department', faculty.department];
-    coverSheet.getRow(5).values = ['Title', faculty.title];
-    coverSheet.getRow(6).values = ['Evaluation Period', cycle?.displayName || 'N/A'];
-    coverSheet.getRow(7).values = ['Total Submissions', metrics.totalSubmissions];
-    coverSheet.getRow(8).values = ['Overall Average', `${metrics.overallAverage.toFixed(2)} / 5.00`];
-    coverSheet.getRow(9).values = ['Acknowledgment Status', faculty.acknowledgmentStatus];
-    [3, 4, 5, 6, 7, 8, 9].forEach(r => { coverSheet.getRow(r).eachCell(cell => { cell.border = borderStyle; }); });
+    coverSheet.getRow(2).values = ['Professional Development Portfolio', ''];
+    coverSheet.getRow(2).font = { bold: true, size: 12, color: { argb: 'FFB87333' } };
+    
+    coverSheet.getRow(4).values = ['Faculty Information', ''];
+    coverSheet.getRow(4).font = { bold: true, size: 11, color: { argb: 'FF002366' } };
+    coverSheet.getRow(5).values = ['Faculty Name', faculty.name];
+    coverSheet.getRow(6).values = ['Department', faculty.department];
+    coverSheet.getRow(7).values = ['Title', faculty.title];
+    coverSheet.getRow(8).values = ['Evaluation Period', cycle?.displayName || 'N/A'];
+    [5, 6, 7, 8].forEach(r => { coverSheet.getRow(r).eachCell(cell => { cell.border = borderStyle; }); });
+    
+    coverSheet.getRow(10).values = ['Performance Summary', ''];
+    coverSheet.getRow(10).font = { bold: true, size: 11, color: { argb: 'FF002366' } };
+    coverSheet.getRow(11).values = ['Total Submissions', metrics.totalSubmissions];
+    coverSheet.getRow(12).values = ['Overall Average', `${metrics.overallAverage.toFixed(2)} / 5.00`];
+    coverSheet.getRow(13).values = ['Acknowledgment Status', faculty.acknowledgmentStatus.replace('_', ' ').toUpperCase()];
+    coverSheet.getRow(14).values = ['Report Generated', new Date().toLocaleString()];
+    [11, 12, 13, 14].forEach(r => { coverSheet.getRow(r).eachCell(cell => { cell.border = borderStyle; }); });
+    
+    // Add benchmark comparison
+    const deptMetrics = store.getDepartmentMetrics(faculty.department, effectiveCycleId);
+    coverSheet.getRow(16).values = ['Benchmark Comparison', ''];
+    coverSheet.getRow(16).font = { bold: true, size: 11, color: { argb: 'FF002366' } };
+    coverSheet.getRow(17).values = ['Your Average', metrics.overallAverage.toFixed(2)];
+    coverSheet.getRow(18).values = ['Department Average', deptMetrics.institutionAverage.toFixed(2)];
+    coverSheet.getRow(19).values = ['Difference', (metrics.overallAverage - deptMetrics.institutionAverage).toFixed(2)];
+    [17, 18, 19].forEach(r => { coverSheet.getRow(r).eachCell(cell => { cell.border = borderStyle; }); });
 
     // Sheet 2: Criteria Analysis
     const criteriaSheet = workbook.addWorksheet('Criteria Analysis');

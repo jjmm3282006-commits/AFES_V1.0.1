@@ -253,6 +253,43 @@ export async function exportDeanReport(department: string, cycleId?: string): Pr
       if (i % 2 === 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F6F1' } }; });
     });
 
+    // Sheet 9: Compliance Tracking Log
+    const complianceLogSheet = workbook.addWorksheet('Compliance Log');
+    complianceLogSheet.columns = [
+      { width: 30 },
+      { width: 20 },
+      { width: 20 },
+      { width: 20 },
+      { width: 30 }
+    ];
+    complianceLogSheet.getRow(1).values = ['Faculty Name', 'Status', 'Acknowledged Date', 'Last Reminder', 'Notes'];
+    complianceLogSheet.getRow(1).eachCell(cell => { cell.fill = headerFill; cell.font = headerFont; cell.border = borderStyle; });
+
+    faculty.forEach((f, i) => {
+      const rowNum = i + 2;
+      const row = complianceLogSheet.getRow(rowNum);
+      const statusText = f.acknowledgmentStatus === 'acknowledged' ? '🟢 Acknowledged' : 
+                         f.acknowledgmentStatus === 'disputed' ? '🔴 Disputed' : 
+                         f.acknowledgmentStatus === 'pending_acknowledgment' ? '🟡 Pending Ack.' : '⚫ Pending Review';
+      row.values = [
+        f.name,
+        statusText,
+        f.acknowledgedAt ? new Date(f.acknowledgedAt).toLocaleDateString() : '—',
+        f.lastReminderSent ? new Date(f.lastReminderSent).toLocaleDateString() : '—',
+        f.acknowledgmentStatus === 'disputed' ? 'Dispute in progress' : ''
+      ];
+      row.eachCell(cell => { cell.border = borderStyle; });
+      if (i % 2 === 0) row.eachCell(cell => { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF8F6F1' } }; });
+      
+      // Color code status
+      const statusCell = row.getCell(2);
+      if (f.acknowledgmentStatus === 'acknowledged') {
+        statusCell.font = { color: { argb: 'FF2E8B57' }, bold: true };
+      } else if (f.acknowledgmentStatus === 'disputed') {
+        statusCell.font = { color: { argb: 'FFC41E3A' }, bold: true };
+      }
+    });
+
     // Generate and download
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

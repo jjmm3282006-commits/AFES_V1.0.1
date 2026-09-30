@@ -16,6 +16,7 @@ export interface PersistedData {
     evaluations: any[];
     auditLog: any[];
     trainingRecommendations: any[];
+    disputes: any[];
   };
 }
 

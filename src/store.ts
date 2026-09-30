@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { User, Faculty, Student, Dean, EvaluationCycle, Criterion, SubQuestion, Evaluation, AuditLogEntry, RateLimitEntry, FacultyMetrics, EventType, TrainingRecommendation } from './types';
+import type { User, Faculty, Student, Dean, EvaluationCycle, Criterion, SubQuestion, Evaluation, AuditLogEntry, RateLimitEntry, FacultyMetrics, EventType, TrainingRecommendation, Dispute } from './types';
 import { saveToLocalStorage, loadFromLocalStorage, clearLocalStorage } from './utils/persistence';
 
 const BENCHMARK = 3.0;
@@ -256,6 +256,7 @@ class DataStore {
   private listeners: Map<EventType, Set<() => void>> = new Map();
   private studentSessionEvals: Map<string, Set<string>> = new Map();
   private trainingRecommendations: TrainingRecommendation[] = [];
+  private disputes: Dispute[] = [];
   private users: User[] = [
     { id: 'admin', username: 'admin', password: 'admin', role: 'admin', displayName: 'System Administrator' },
     { id: 'faculty', username: 'faculty', password: 'faculty', role: 'faculty', displayName: 'Dr. Sarah Chen', facultyId: 'F001', department: 'Computer Science' },
@@ -278,6 +279,7 @@ class DataStore {
       this.evaluations = persistedData.evaluations || this.evaluations;
       this.auditLog = persistedData.auditLog || this.auditLog;
       this.trainingRecommendations = persistedData.trainingRecommendations || this.trainingRecommendations;
+      this.disputes = persistedData.disputes || this.disputes;
       this.addAuditLog('system', 'data_restored', 'DataStore', 'Data restored from localStorage');
     } else {
       this.addAuditLog('system', 'system_init', 'DataStore', `System initialized — Faculty: ${FACULTY_SEED.length}, Students: ${STUDENTS_SEED.length}, Deans: ${DEANS_SEED.length}, Cycles: ${CYCLES_SEED.length}, Criteria: ${CRITERIA_SEED.length}, Sub-Questions: ${SUB_QUESTIONS.length}, Seed Evaluations: ${this.evaluations.length}`);
@@ -299,6 +301,7 @@ class DataStore {
       evaluations: this.evaluations,
       auditLog: this.auditLog,
       trainingRecommendations: this.trainingRecommendations,
+      disputes: this.disputes,
     });
   }
 
@@ -342,6 +345,95 @@ class DataStore {
     const f = this.faculty.find(fc => fc.id === facultyId);
     if (f) { f.acknowledgmentStatus = 'acknowledged'; f.acknowledgedAt = new Date().toISOString(); f.acknowledgedBy = verifiedBy; }
     this.addAuditLog(`faculty:${facultyId}`, 'acknowledgment', facultyId, `Faculty acknowledged report. Verified by: ${verifiedBy}`);
+    this.persistData();
+    this.emit('acknowledgment_changed');
+  }
+
+  // Dispute Management
+  getDisputes(): Dispute[] { return [...this.disputes]; }
+  getDisputesForFaculty(facultyId: string): Dispute[] { return this.disputes.filter(d => d.facultyId === facultyId); }
+  getDisputeById(disputeId: string): Dispute | undefined { return this.disputes.find(d => d.id === disputeId); }
+  getPendingDisputes(): Dispute[] { return this.disputes.filter(d => d.status === 'pending'); }
+
+  async submitDispute(facultyId: string, cycleId: string, justification: string): Promise<Dispute> {
+    await this.simulateLatency();
+    const faculty = this.getFacultyById(facultyId);
+    if (!faculty) throw new Error('Faculty not found');
+    
+    const dispute: Dispute = {
+      id: uuidv4(),
+      facultyId,
+      cycleId,
+      submittedAt: new Date().toISOString(),
+      justification,
+      status: 'pending',
+    };
+    
+    this.disputes.push(dispute);
+    faculty.acknowledgmentStatus = 'disputed';
+    faculty.disputeId = dispute.id;
+    
+    this.addAuditLog(`faculty:${facultyId}`, 'dispute_submitted', facultyId, `Dispute submitted for cycle ${cycleId}. Justification: ${justification.substring(0, 100)}...`);
+    this.persistData();
+    this.emit('dispute_submitted');
+    this.emit('acknowledgment_changed');
+    
+    return dispute;
+  }
+
+  async resolveDispute(disputeId: string, resolvedBy: string, resolution: string, adjustedScores?: Record<string, number>, redactedFeedback?: string[]): Promise<void> {
+    await this.simulateLatency();
+    const dispute = this.disputes.find(d => d.id === disputeId);
+    if (!dispute) throw new Error('Dispute not found');
+    
+    dispute.status = 'resolved';
+    dispute.resolvedAt = new Date().toISOString();
+    dispute.resolvedBy = resolvedBy;
+    dispute.resolution = resolution;
+    if (adjustedScores) dispute.adjustedScores = adjustedScores;
+    if (redactedFeedback) dispute.redactedFeedback = redactedFeedback;
+    
+    const faculty = this.getFacultyById(dispute.facultyId);
+    if (faculty) {
+      faculty.acknowledgmentStatus = 'pending_acknowledgment';
+      faculty.disputeId = undefined;
+    }
+    
+    this.addAuditLog(`admin:${resolvedBy}`, 'dispute_resolved', disputeId, `Dispute resolved by ${resolvedBy}. Resolution: ${resolution.substring(0, 100)}...`);
+    this.persistData();
+    this.emit('dispute_resolved');
+    this.emit('acknowledgment_changed');
+  }
+
+  async dismissDispute(disputeId: string, resolvedBy: string, reason: string): Promise<void> {
+    await this.simulateLatency();
+    const dispute = this.disputes.find(d => d.id === disputeId);
+    if (!dispute) throw new Error('Dispute not found');
+    
+    dispute.status = 'dismissed';
+    dispute.resolvedAt = new Date().toISOString();
+    dispute.resolvedBy = resolvedBy;
+    dispute.resolution = `Dismissed: ${reason}`;
+    
+    const faculty = this.getFacultyById(dispute.facultyId);
+    if (faculty) {
+      faculty.acknowledgmentStatus = 'pending_acknowledgment';
+      faculty.disputeId = undefined;
+    }
+    
+    this.addAuditLog(`admin:${resolvedBy}`, 'dispute_dismissed', disputeId, `Dispute dismissed by ${resolvedBy}. Reason: ${reason}`);
+    this.persistData();
+    this.emit('dispute_resolved');
+    this.emit('acknowledgment_changed');
+  }
+
+  async sendReminder(facultyId: string): Promise<void> {
+    await this.simulateLatency();
+    const faculty = this.getFacultyById(facultyId);
+    if (!faculty) throw new Error('Faculty not found');
+    
+    faculty.lastReminderSent = new Date().toISOString();
+    this.addAuditLog('admin', 'reminder_sent', facultyId, `Acknowledgment reminder sent to ${faculty.name}`);
     this.persistData();
     this.emit('acknowledgment_changed');
   }
@@ -618,6 +710,7 @@ class DataStore {
     this.evaluations = generateSeedEvaluations();
     this.auditLog = [];
     this.trainingRecommendations = [];
+    this.disputes = [];
     this.studentSessionEvals.clear();
     this.addAuditLog('admin', 'data_reset', 'DataStore', 'All data reset to seed values');
     this.persistData();
@@ -635,6 +728,7 @@ class DataStore {
       evaluations: this.evaluations,
       auditLog: this.auditLog,
       trainingRecommendations: this.trainingRecommendations,
+      disputes: this.disputes,
     };
   }
 

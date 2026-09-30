@@ -173,9 +173,63 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
       </div>
       <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
         <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><CheckCircle size={16} style={{ color: '#B87333' }} />Acknowledgment Compliance</h3>
-        <div className="grid grid-cols-3 gap-4 mb-4"><div className="p-3 rounded-lg text-center" style={{ backgroundColor: '#D1FAE5' }}><p className="text-xl font-bold" style={{ color: '#2E8B57' }}>{acknowledged}</p><p className="text-xs" style={{ color: '#2E8B57' }}>Acknowledged</p></div><div className="p-3 rounded-lg text-center" style={{ backgroundColor: '#F5E6D3' }}><p className="text-xl font-bold" style={{ color: '#B87333' }}>{faculty.filter(f => f.acknowledgmentStatus === 'pending_acknowledgment').length}</p><p className="text-xs" style={{ color: '#B87333' }}>Pending Ack.</p></div><div className="p-3 rounded-lg text-center" style={{ backgroundColor: '#FEE2E2' }}><p className="text-xl font-bold" style={{ color: '#C41E3A' }}>{faculty.filter(f => f.acknowledgmentStatus === 'pending_review').length}</p><p className="text-xs" style={{ color: '#C41E3A' }}>Pending Review</p></div></div>
-        <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: '#D5D8DC' }}><div className="h-full flex"><div style={{ width: `${faculty.length > 0 ? (acknowledged / faculty.length) * 100 : 0}%`, backgroundColor: '#2E8B57' }} /><div style={{ width: `${faculty.length > 0 ? (faculty.filter(f => f.acknowledgmentStatus === 'pending_acknowledgment').length / faculty.length) * 100 : 0}%`, backgroundColor: '#B87333' }} /><div style={{ width: `${faculty.length > 0 ? (faculty.filter(f => f.acknowledgmentStatus === 'pending_review').length / faculty.length) * 100 : 0}%`, backgroundColor: '#C41E3A' }} /></div></div>
-        <p className="text-xs mt-1 text-right" style={{ color: '#4B5563' }}>{faculty.length > 0 ? Math.round((acknowledged / faculty.length) * 100) : 0}% complete</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="p-3 rounded-lg text-center" style={{ backgroundColor: '#D1FAE5' }}>
+            <p className="text-xl font-bold" style={{ color: '#2E8B57' }}>{acknowledged}</p>
+            <p className="text-xs" style={{ color: '#2E8B57' }}>🟢 Acknowledged</p>
+          </div>
+          <div className="p-3 rounded-lg text-center" style={{ backgroundColor: '#F5E6D3' }}>
+            <p className="text-xl font-bold" style={{ color: '#B87333' }}>{faculty.filter(f => f.acknowledgmentStatus === 'pending_acknowledgment').length}</p>
+            <p className="text-xs" style={{ color: '#B87333' }}>🟡 Pending Ack.</p>
+          </div>
+          <div className="p-3 rounded-lg text-center" style={{ backgroundColor: '#FEE2E2' }}>
+            <p className="text-xl font-bold" style={{ color: '#C41E3A' }}>{faculty.filter(f => f.acknowledgmentStatus === 'disputed').length}</p>
+            <p className="text-xs" style={{ color: '#C41E3A' }}>🔴 Disputed</p>
+          </div>
+          <div className="p-3 rounded-lg text-center" style={{ backgroundColor: '#D5D8DC' }}>
+            <p className="text-xl font-bold" style={{ color: '#4B5563' }}>{faculty.filter(f => f.acknowledgmentStatus === 'pending_review').length}</p>
+            <p className="text-xs" style={{ color: '#4B5563' }}>⚫ Pending Review</p>
+          </div>
+        </div>
+        <div className="w-full h-3 rounded-full overflow-hidden mb-2" style={{ backgroundColor: '#D5D8DC' }}>
+          <div className="h-full flex">
+            <div style={{ width: `${faculty.length > 0 ? (acknowledged / faculty.length) * 100 : 0}%`, backgroundColor: '#2E8B57' }} />
+            <div style={{ width: `${faculty.length > 0 ? (faculty.filter(f => f.acknowledgmentStatus === 'pending_acknowledgment').length / faculty.length) * 100 : 0}%`, backgroundColor: '#B87333' }} />
+            <div style={{ width: `${faculty.length > 0 ? (faculty.filter(f => f.acknowledgmentStatus === 'disputed').length / faculty.length) * 100 : 0}%`, backgroundColor: '#C41E3A' }} />
+            <div style={{ width: `${faculty.length > 0 ? (faculty.filter(f => f.acknowledgmentStatus === 'pending_review').length / faculty.length) * 100 : 0}%`, backgroundColor: '#9CA3AF' }} />
+          </div>
+        </div>
+        <p className="text-xs mb-4 text-right" style={{ color: '#4B5563' }}>{faculty.length > 0 ? Math.round((acknowledged / faculty.length) * 100) : 0}% complete</p>
+        
+        {/* Faculty Acknowledgment Details */}
+        <div className="border-t pt-4" style={{ borderColor: '#D5D8DC' }}>
+          <h4 className="text-xs font-semibold mb-2" style={{ color: '#002366' }}>Faculty Status Details</h4>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {faculty.map(f => (
+              <div key={f.id} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
+                <div className="flex-1">
+                  <p className="text-xs font-medium" style={{ color: '#1A1A1A' }}>{f.name}</p>
+                  <p className="text-[10px]" style={{ color: '#9CA3AF' }}>
+                    {f.acknowledgmentStatus === 'acknowledged' && f.acknowledgedAt ? `Acknowledged ${new Date(f.acknowledgedAt).toLocaleDateString()}` : 
+                     f.acknowledgmentStatus === 'disputed' ? 'Dispute in progress' :
+                     f.lastReminderSent ? `Last reminder: ${new Date(f.lastReminderSent).toLocaleDateString()}` : 'No action yet'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{
+                    backgroundColor: f.acknowledgmentStatus === 'acknowledged' ? '#D1FAE5' : f.acknowledgmentStatus === 'disputed' ? '#FEE2E2' : f.acknowledgmentStatus === 'pending_acknowledgment' ? '#F5E6D3' : '#D5D8DC',
+                    color: f.acknowledgmentStatus === 'acknowledged' ? '#2E8B57' : f.acknowledgmentStatus === 'disputed' ? '#C41E3A' : f.acknowledgmentStatus === 'pending_acknowledgment' ? '#B87333' : '#4B5563'
+                  }}>
+                    {f.acknowledgmentStatus === 'acknowledged' ? '✓ Ack' : f.acknowledgmentStatus === 'disputed' ? '⚠ Disputed' : f.acknowledgmentStatus === 'pending_acknowledgment' ? '⏳ Pending' : '⏸ Review'}
+                  </span>
+                  {(f.acknowledgmentStatus === 'pending_acknowledgment' || f.acknowledgmentStatus === 'pending_review') && (
+                    <button onClick={async () => { await store.sendReminder(f.id); }} className="px-2 py-0.5 rounded text-[10px] font-medium text-white hover:opacity-90" style={{ backgroundColor: '#B87333' }}>Send Reminder</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>

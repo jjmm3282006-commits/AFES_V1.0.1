@@ -3,13 +3,13 @@ import { store, BENCHMARK, THRESHOLD } from '../store';
 import { exportFacultyReport } from '../utils/excel';
 
 import ConfirmDialog from '../components/ConfirmDialog';
-import type { Faculty, EvaluationCycle, Criterion, AuditLogEntry, SubQuestion, TrainingRecommendation } from '../types';
+import type { Faculty, EvaluationCycle, Criterion, AuditLogEntry, SubQuestion, TrainingRecommendation, Dispute } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { LayoutDashboard, Users, Calendar, ListChecks, ScrollText, Plus, Trash2, Search, AlertTriangle, CheckCircle, TrendingUp, Shield, FileSpreadsheet, GraduationCap, Edit3, Sparkles, Download, BarChart3, MessageSquare, BookOpen } from 'lucide-react';
 
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
 
-type Tab = 'overview' | 'faculty' | 'cycles' | 'criteria' | 'tna' | 'audit';
+type Tab = 'overview' | 'faculty' | 'cycles' | 'criteria' | 'tna' | 'disputes' | 'audit';
 interface AdminDashboardProps { viewingCycleId?: string; }
 
 export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) {
@@ -19,6 +19,9 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
   const [criteria, setCriteria] = useState<Criterion[]>([]);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);
   const [trainingRecs, setTrainingRecs] = useState<TrainingRecommendation[]>([]);
+  const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [selectedDispute, setSelectedDispute] = useState<Dispute | null>(null);
+  const [resolutionText, setResolutionText] = useState('');
   const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [newCycleName, setNewCycleName] = useState('');
@@ -37,10 +40,10 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
   const activeCycle = cycles.find(c => c.status === 'active');
   const cycleId = viewingCycleId || activeCycle?.id;
 
-  const loadData = useCallback(() => { setFaculty(store.getFaculty()); setCycles(store.getCycles()); setCriteria(store.getCriteria()); setAuditLog(store.getAuditLog()); setTrainingRecs(store.getTrainingRecommendations()); }, []);
-  useEffect(() => { loadData(); const unsubs = [store.subscribe('criteria_changed', loadData), store.subscribe('cycle_changed', loadData), store.subscribe('submission_added', loadData), store.subscribe('acknowledgment_changed', loadData), store.subscribe('training_changed', loadData)]; return () => unsubs.forEach(u => u()); }, [loadData]);
+  const loadData = useCallback(() => { setFaculty(store.getFaculty()); setCycles(store.getCycles()); setCriteria(store.getCriteria()); setAuditLog(store.getAuditLog()); setTrainingRecs(store.getTrainingRecommendations()); setDisputes(store.getDisputes()); }, []);
+  useEffect(() => { loadData(); const unsubs = [store.subscribe('criteria_changed', loadData), store.subscribe('cycle_changed', loadData), store.subscribe('submission_added', loadData), store.subscribe('acknowledgment_changed', loadData), store.subscribe('training_changed', loadData), store.subscribe('dispute_submitted', loadData), store.subscribe('dispute_resolved', loadData)]; return () => unsubs.forEach(u => u()); }, [loadData]);
 
-  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [{ id: 'overview', label: 'Overview', icon: <LayoutDashboard size={16} /> }, { id: 'faculty', label: 'Faculty', icon: <Users size={16} /> }, { id: 'cycles', label: 'Cycles', icon: <Calendar size={16} /> }, { id: 'criteria', label: 'Criteria', icon: <ListChecks size={16} /> }, { id: 'tna', label: 'TNA', icon: <GraduationCap size={16} /> }, { id: 'audit', label: 'Audit Log', icon: <ScrollText size={16} /> }];
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [{ id: 'overview', label: 'Overview', icon: <LayoutDashboard size={16} /> }, { id: 'faculty', label: 'Faculty', icon: <Users size={16} /> }, { id: 'cycles', label: 'Cycles', icon: <Calendar size={16} /> }, { id: 'criteria', label: 'Criteria', icon: <ListChecks size={16} /> }, { id: 'tna', label: 'TNA', icon: <GraduationCap size={16} /> }, { id: 'disputes', label: 'Disputes', icon: <AlertTriangle size={16} /> }, { id: 'audit', label: 'Audit Log', icon: <ScrollText size={16} /> }];
 
   const facultyWithMetrics = faculty.filter(f => store.getFacultyMetrics(f.id, cycleId).totalSubmissions >= THRESHOLD);
   const flaggedFaculty = facultyWithMetrics.filter(f => store.getFacultyMetrics(f.id, cycleId).overallAverage < BENCHMARK);
@@ -297,6 +300,77 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
           <h3 className="text-lg font-bold" style={{ color: '#002366' }}>Training Needs Analysis</h3>
           <div className="rounded-xl p-3 flex items-center gap-2" style={{ backgroundColor: '#F5E6D3', border: '1px solid #B87333' }}><Sparkles size={16} style={{ color: '#B87333' }} /><p className="text-xs"><strong>AI-Powered:</strong> Recommendations are generated based on evaluation data. Admins can edit any recommendation.</p></div>
           <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}><h4 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><AlertTriangle size={16} style={{ color: '#C41E3A' }} />Faculty Below Benchmark (Average &lt; {BENCHMARK.toFixed(1)})</h4><div className="space-y-4">{faculty.filter(f => { const m = store.getFacultyMetrics(f.id, cycleId); return m.totalSubmissions >= THRESHOLD && Object.values(m.criteriaAverages).some(v => v < BENCHMARK && v > 0); }).map(f => { const m = store.getFacultyMetrics(f.id, cycleId); const rec = trainingRecs.find(r => r.facultyId === f.id && r.cycleId === cycleId); const isEditing = editingRec === rec?.id; return (<div key={f.id} className="p-4 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}><div className="flex items-center justify-between mb-2"><p className="font-semibold text-sm" style={{ color: '#002366' }}>{f.name}</p><span className="text-xs font-bold" style={{ color: '#C41E3A' }}>Overall: {m.overallAverage.toFixed(2)}</span></div>{rec ? (<div><div className="flex items-center justify-between mb-1"><span className="text-xs font-medium" style={{ color: rec.editedByAdmin ? '#B87333' : '#2E8B57' }}>{rec.editedByAdmin ? '✎ Admin-Edited' : '✦ AI-Generated'}</span><div className="flex items-center gap-1"><button onClick={() => { if (isEditing) { store.updateTrainingRecommendation(rec.id, editRecText); setEditingRec(null); } else { setEditingRec(rec.id); setEditRecText(rec.recommendation); } }} className="px-2 py-1 rounded text-xs font-medium text-white hover:opacity-90" style={{ backgroundColor: '#002366' }}><Edit3 size={10} className="inline mr-1" />{isEditing ? 'Save' : 'Edit'}</button>{isEditing && <button onClick={() => setEditingRec(null)} className="px-2 py-1 rounded text-xs" style={{ backgroundColor: '#D5D8DC' }}>Cancel</button>}<button onClick={() => store.deleteTrainingRecommendation(rec.id)} className="px-2 py-1 rounded text-xs text-white hover:opacity-90" style={{ backgroundColor: '#C41E3A' }}><Trash2 size={10} /></button></div></div>{isEditing ? (<textarea value={editRecText} onChange={e => setEditRecText(e.target.value)} className="w-full px-3 py-2 rounded-lg border text-xs outline-none resize-none" style={{ backgroundColor: '#FFFFFF', borderColor: '#D5D8DC' }} rows={6} />) : (<div className="p-3 rounded-lg text-xs leading-relaxed whitespace-pre-wrap" style={{ backgroundColor: '#FFFFFF', border: '1px solid #D5D8DC' }}>{rec.recommendation}</div>)}</div>) : (<button onClick={async () => { await store.generateTrainingRecommendation(f.id, cycleId); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90" style={{ backgroundColor: '#B87333' }}><Sparkles size={12} />Generate AI Recommendation</button>)}</div>); })}{faculty.filter(f => { const m = store.getFacultyMetrics(f.id, cycleId); return m.totalSubmissions >= THRESHOLD && Object.values(m.criteriaAverages).some(v => v < BENCHMARK && v > 0); }).length === 0 && (<p className="text-sm italic" style={{ color: '#9CA3AF' }}>No faculty currently below benchmark.</p>)}</div></div>
+        </div>
+      )}
+
+      {activeTab === 'disputes' && (
+        <div className="space-y-6">
+          <h3 className="text-lg font-bold" style={{ color: '#002366' }}>Dispute Resolution Queue</h3>
+          <div className="rounded-xl p-3 flex items-center gap-2" style={{ backgroundColor: '#FEE2E2', border: '1px solid #C41E3A' }}>
+            <AlertTriangle size={16} style={{ color: '#C41E3A' }} />
+            <p className="text-xs"><strong>Pending Disputes:</strong> {disputes.filter(d => d.status === 'pending').length} dispute(s) awaiting review</p>
+          </div>
+          <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+            <h4 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>All Disputes</h4>
+            {disputes.length === 0 ? (
+              <p className="text-sm italic" style={{ color: '#9CA3AF' }}>No disputes submitted yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {disputes.map(dispute => {
+                  const facultyMember = faculty.find(f => f.id === dispute.facultyId);
+                  const cycle = cycles.find(c => c.id === dispute.cycleId);
+                  return (
+                    <div key={dispute.id} className="p-4 rounded-lg" style={{ backgroundColor: '#F8F6F1', border: `2px solid ${dispute.status === 'pending' ? '#C41E3A' : dispute.status === 'resolved' ? '#2E8B57' : '#9CA3AF'}` }}>
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-semibold text-sm" style={{ color: '#002366' }}>{facultyMember?.name || 'Unknown Faculty'}</p>
+                          <p className="text-xs" style={{ color: '#4B5563' }}>Cycle: {cycle?.displayName || 'Unknown'} • Submitted: {new Date(dispute.submittedAt).toLocaleDateString()}</p>
+                        </div>
+                        <span className="px-2 py-1 rounded-full text-xs font-medium" style={{
+                          backgroundColor: dispute.status === 'pending' ? '#FEE2E2' : dispute.status === 'resolved' ? '#D1FAE5' : '#D5D8DC',
+                          color: dispute.status === 'pending' ? '#C41E3A' : dispute.status === 'resolved' ? '#2E8B57' : '#4B5563'
+                        }}>
+                          {dispute.status === 'pending' ? '🔴 Pending' : dispute.status === 'resolved' ? '🟢 Resolved' : '⚫ Dismissed'}
+                        </span>
+                      </div>
+                      <div className="mb-3">
+                        <p className="text-xs font-medium mb-1" style={{ color: '#4B5563' }}>Justification:</p>
+                        <p className="text-sm" style={{ color: '#1A1A1A' }}>{dispute.justification}</p>
+                      </div>
+                      {dispute.resolution && (
+                        <div className="mb-3 p-2 rounded" style={{ backgroundColor: '#FFFFFF' }}>
+                          <p className="text-xs font-medium mb-1" style={{ color: '#4B5563' }}>Resolution:</p>
+                          <p className="text-sm" style={{ color: '#1A1A1A' }}>{dispute.resolution}</p>
+                          <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Resolved by: {dispute.resolvedBy} on {new Date(dispute.resolvedAt || '').toLocaleDateString()}</p>
+                        </div>
+                      )}
+                      {dispute.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <button onClick={() => { setSelectedDispute(dispute); setResolutionText(''); }} className="px-3 py-1.5 rounded text-xs font-medium text-white hover:opacity-90" style={{ backgroundColor: '#2E8B57' }}>Resolve</button>
+                          <button onClick={async () => { if (confirm('Dismiss this dispute?')) { await store.dismissDispute(dispute.id, 'admin', 'Dismissed by admin'); } }} className="px-3 py-1.5 rounded text-xs font-medium text-white hover:opacity-90" style={{ backgroundColor: '#9CA3AF' }}>Dismiss</button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {selectedDispute && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setSelectedDispute(null)} />
+          <div className="relative w-full max-w-md rounded-xl shadow-2xl p-6" style={{ backgroundColor: '#EDEBE8' }}>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: '#2E8B57' }}>Resolve Dispute</h3>
+            <p className="text-xs mb-4" style={{ color: '#4B5563' }}>Provide resolution details for this dispute.</p>
+            <textarea value={resolutionText} onChange={e => setResolutionText(e.target.value)} placeholder="Enter resolution details..." className="w-full px-3 py-2 rounded-lg border text-sm outline-none mb-4 resize-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }} rows={6} />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setSelectedDispute(null)} className="px-3 py-1.5 rounded-lg text-sm border hover:bg-black/5" style={{ borderColor: '#D5D8DC' }}>Cancel</button>
+              <button onClick={async () => { if (resolutionText.trim()) { await store.resolveDispute(selectedDispute.id, 'admin', resolutionText); setSelectedDispute(null); setResolutionText(''); } }} disabled={!resolutionText.trim()} className="px-4 py-1.5 rounded-lg text-sm font-medium text-white hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#2E8B57' }}>Resolve Dispute</button>
+            </div>
+          </div>
         </div>
       )}
 

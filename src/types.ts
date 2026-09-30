@@ -23,9 +23,11 @@ export interface Faculty {
   department: string;
   title: string;
   courses: string[];
-  acknowledgmentStatus: 'pending_review' | 'pending_acknowledgment' | 'acknowledged';
+  acknowledgmentStatus: 'pending_review' | 'pending_acknowledgment' | 'acknowledged' | 'disputed';
   acknowledgedAt?: string;
   acknowledgedBy?: string;
+  disputeId?: string;
+  lastReminderSent?: string;
 }
 
 export interface Student {
@@ -79,7 +81,21 @@ export interface RateLimitEntry {
   windowStart: number;
 }
 
-export type EventType = 'criteria_changed' | 'cycle_changed' | 'submission_added' | 'data_refresh' | 'acknowledgment_changed' | 'training_changed';
+export type EventType = 'criteria_changed' | 'cycle_changed' | 'submission_added' | 'data_refresh' | 'acknowledgment_changed' | 'training_changed' | 'dispute_submitted' | 'dispute_resolved';
+
+export interface Dispute {
+  id: string;
+  facultyId: string;
+  cycleId: string;
+  submittedAt: string;
+  justification: string;
+  status: 'pending' | 'resolved' | 'dismissed';
+  resolvedAt?: string;
+  resolvedBy?: string;
+  resolution?: string;
+  adjustedScores?: Record<string, number>;
+  redactedFeedback?: string[];
+}
 
 export interface FacultyMetrics {
   totalSubmissions: number;
