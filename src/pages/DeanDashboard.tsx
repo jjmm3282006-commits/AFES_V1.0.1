@@ -15,6 +15,7 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
   const { user } = useAuth();
   const department = user?.department || '';
   const [criteria, setCriteria] = useState<Criterion[]>([]);
+  const [isPrintMode, setIsPrintMode] = useState(false);
   const activeCycle = store.getActiveCycle();
   const cycleId = viewingCycleId || activeCycle?.id;
   const allCycles = store.getCycles();
@@ -118,6 +119,14 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
     await exportDeanReport(department, cycleId);
   };
 
+  const handlePrint = () => {
+    setIsPrintMode(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrintMode(false);
+    }, 100);
+  };
+
   // Calculate department score distribution
   const deptScoreDist = [0, 0, 0, 0, 0];
   deptEvals.forEach(ev => {
@@ -137,9 +146,20 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
     { name: '1★', value: deptScoreDist[0], percentage: deptTotalRatings > 0 ? ((deptScoreDist[0] / deptTotalRatings) * 100).toFixed(1) : '0' },
   ];
 
+  // Render print view if in print mode
+  if (isPrintMode) {
+    return (
+      <DeanPrintReport
+        department={department}
+        cycleName={viewingCycle?.displayName || 'Current Cycle'}
+        criteria={criteria}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3"><div><h2 className="text-2xl font-bold" style={{ color: '#002366' }}>Department Overview</h2><p className="text-sm" style={{ color: '#4B5563' }}>{department} Department • {user?.displayName}</p>{viewingCycle && <p className="text-xs mt-1" style={{ color: '#B87333' }}>Viewing: {viewingCycle.displayName}</p>}</div><div className="flex items-center gap-2"><button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90" style={{ backgroundColor: '#D5D8DC', color: '#1A1A1A' }}><Printer size={14} />Print Report</button><button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90" style={{ backgroundColor: '#2E8B57' }}><Download size={14} />Export Report</button><div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: '#F5E6D3' }}><Shield size={14} style={{ color: '#B87333' }} /><span className="text-xs font-medium" style={{ color: '#B87333' }}>Aggregated View Only</span></div></div></div>
+      <div className="flex items-center justify-between flex-wrap gap-3"><div><h2 className="text-2xl font-bold" style={{ color: '#002366' }}>Department Overview</h2><p className="text-sm" style={{ color: '#4B5563' }}>{department} Department • {user?.displayName}</p>{viewingCycle && <p className="text-xs mt-1" style={{ color: '#B87333' }}>Viewing: {viewingCycle.displayName}</p>}</div><div className="flex items-center gap-2"><button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium hover:opacity-90" style={{ backgroundColor: '#D5D8DC', color: '#1A1A1A' }}><Printer size={14} />Print Report</button><button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90" style={{ backgroundColor: '#2E8B57' }}><Download size={14} />Export Report</button><div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: '#F5E6D3' }}><Shield size={14} style={{ color: '#B87333' }} /><span className="text-xs font-medium" style={{ color: '#B87333' }}>Aggregated View Only</span></div></div></div>
       <div className="rounded-xl p-3 flex items-center gap-2" style={{ backgroundColor: '#F5E6D3', border: '1px solid #B87333' }}><Shield size={16} style={{ color: '#B87333' }} /><p className="text-xs"><strong>Privacy Notice:</strong> Only department-level aggregated metrics are shown.</p></div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}><div className="flex items-center gap-2 mb-1"><TrendingUp size={16} style={{ color: '#002366' }} /><span className="text-xs font-medium" style={{ color: '#4B5563' }}>Total Submissions</span></div><p className="text-2xl font-bold" style={{ color: '#002366' }}>{deptMetrics.totalSubmissions}</p></div>

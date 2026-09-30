@@ -37,6 +37,7 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
   const [editingSubQ, setEditingSubQ] = useState<string | null>(null);
   const [editSubQText, setEditSubQText] = useState('');
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; type: 'danger' | 'warning' | 'info'; title: string; message: string; onConfirm: () => void }>({ open: false, type: 'warning', title: '', message: '', onConfirm: () => {} });
+  const [isPrintMode, setIsPrintMode] = useState(false);
 
   const activeCycle = cycles.find(c => c.status === 'active');
   const cycleId = viewingCycleId || activeCycle?.id;
@@ -84,6 +85,24 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
     { name: '2★', value: institutionScoreDist[1], percentage: institutionTotalRatings > 0 ? ((institutionScoreDist[1] / institutionTotalRatings) * 100).toFixed(1) : '0' },
     { name: '1★', value: institutionScoreDist[0], percentage: institutionTotalRatings > 0 ? ((institutionScoreDist[0] / institutionTotalRatings) * 100).toFixed(1) : '0' },
   ];
+
+  const handlePrint = () => {
+    setIsPrintMode(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrintMode(false);
+    }, 100);
+  };
+
+  // Render print view if in print mode
+  if (isPrintMode) {
+    return (
+      <AdminPrintReport
+        cycleName={activeCycle?.displayName || 'Current Cycle'}
+        criteria={criteria}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6">
