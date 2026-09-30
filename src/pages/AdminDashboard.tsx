@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { store, BENCHMARK, THRESHOLD } from '../store';
 import { exportFacultyReport } from '../utils/excel';
-import { verifyDataIntegrity, getDataSummary } from '../utils/dataVerification';
+
 import ConfirmDialog from '../components/ConfirmDialog';
 import type { Faculty, EvaluationCycle, Criterion, AuditLogEntry, SubQuestion, TrainingRecommendation } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
-import { LayoutDashboard, Users, Calendar, ListChecks, ScrollText, Plus, Trash2, Search, AlertTriangle, CheckCircle, TrendingUp, Shield, FileSpreadsheet, GraduationCap, Edit3, Sparkles, Download, BarChart3, MessageSquare, BookOpen, Database } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, ListChecks, ScrollText, Plus, Trash2, Search, AlertTriangle, CheckCircle, TrendingUp, Shield, FileSpreadsheet, GraduationCap, Edit3, Sparkles, Download, BarChart3, MessageSquare, BookOpen } from 'lucide-react';
 
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
 
@@ -94,37 +94,7 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
             <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}><p className="text-xs font-medium mb-1" style={{ color: '#4B5563' }}>Below Benchmark</p><p className="text-2xl font-bold" style={{ color: '#C41E3A' }}>{flaggedFaculty.length}</p></div>
           </div>
 
-          {/* Data Verification Panel */}
-          <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#F8F6F1', border: '2px solid #2E8B57' }}>
-            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}>
-              <Database size={16} style={{ color: '#2E8B57' }} />
-              Data Processing Verification
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: '#EDEBE8' }}>
-                <p className="text-xs" style={{ color: '#4B5563' }}>Total Evaluations</p>
-                <p className="text-lg font-bold" style={{ color: '#002366' }}>{getDataSummary().totalEvaluations}</p>
-              </div>
-              <div className="p-2 rounded-lg" style={{ backgroundColor: '#EDEBE8' }}>
-                <p className="text-xs" style={{ color: '#4B5563' }}>Active Cycle</p>
-                <p className="text-lg font-bold" style={{ color: '#002366' }}>{getDataSummary().activeCycle || 'None'}</p>
-              </div>
-              <div className="p-2 rounded-lg" style={{ backgroundColor: '#EDEBE8' }}>
-                <p className="text-xs" style={{ color: '#4B5563' }}>Criteria</p>
-                <p className="text-lg font-bold" style={{ color: '#002366' }}>{getDataSummary().totalCriteria}</p>
-              </div>
-              <div className="p-2 rounded-lg" style={{ backgroundColor: '#EDEBE8' }}>
-                <p className="text-xs" style={{ color: '#4B5563' }}>Sub-Questions</p>
-                <p className="text-lg font-bold" style={{ color: '#002366' }}>{getDataSummary().totalSubQuestions}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 p-2 rounded-lg" style={{ backgroundColor: '#D1FAE5' }}>
-              <CheckCircle size={16} style={{ color: '#2E8B57' }} />
-              <p className="text-xs font-medium" style={{ color: '#2E8B57' }}>
-                ✓ All data is being processed correctly - Metrics calculated from {getDataSummary().totalEvaluations} real evaluations
-              </p>
-            </div>
-          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
               <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Completion by Department</h3>
