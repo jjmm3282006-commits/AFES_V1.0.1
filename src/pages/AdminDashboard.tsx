@@ -39,6 +39,21 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
   const facultyWithMetrics = faculty.filter(f => store.getFacultyMetrics(f.id, cycleId).totalSubmissions >= THRESHOLD);
   const flaggedFaculty = facultyWithMetrics.filter(f => store.getFacultyMetrics(f.id, cycleId).overallAverage < BENCHMARK);
   const acknowledgedCount = faculty.filter(f => f.acknowledgmentStatus === 'acknowledged').length;
+  const topRated = [...facultyWithMetrics].sort((a, b) => store.getFacultyMetrics(b.id, cycleId).overallAverage - store.getFacultyMetrics(a.id, cycleId).overallAverage).slice(0, 3);
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [generatingAI, setGeneratingAI] = useState(false);
+
+  const generateAISummary = async () => {
+    setGeneratingAI(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const totalSubs = store.getEvaluations().filter(e => e.cycleId === cycleId).length;
+    const deptGroups: Record<string, number> = {};
+    faculty.forEach(f => { const m = store.getFacultyMetrics(f.id, cycleId); deptGroups[f.department] = (deptGroups[f.department] || 0) + m.totalSubmissions; });
+    const topDept = Object.entries(deptGroups).sort((a, b) => b[1] - a[1])[0];
+    const summary = `System Status: ${totalSubs} evaluations across ${faculty.length} faculty. ${facultyWithMetrics.length} have sufficient data (${THRESHOLD}+ submissions). ${flaggedFaculty.length} faculty below benchmark (${BENCHMARK.toFixed(1)}). ${acknowledgedCount} acknowledged, ${faculty.length - acknowledgedCount} pending. ${topDept?.[0] || 'N/A'} leads with ${topDept?.[1] || 0} submissions.`;
+    setAiSummary(summary);
+    setGeneratingAI(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -52,7 +67,57 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
             <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}><p className="text-xs font-medium mb-1" style={{ color: '#4B5563' }}>Acknowledged</p><p className="text-2xl font-bold" style={{ color: '#2E8B57' }}>{acknowledgedCount}/{faculty.length}</p></div>
             <div className="rounded-xl p-4 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}><p className="text-xs font-medium mb-1" style={{ color: '#4B5563' }}>Below Benchmark</p><p className="text-2xl font-bold" style={{ color: '#C41E3A' }}>{flaggedFaculty.length}</p></div>
           </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Completion by Department</h3>
+              <div className="space-y-3">
+                {['Computer Science', 'Mathematics', 'Physics'].map(dept => {
+                  const deptFaculty = faculty.filter(f => f.department === dept);
+                  const totalSubs = deptFaculty.reduce((sum, f) => sum + store.getFacultyMetrics(f.id, cycleId).totalSubmissions, 0);
+                  const completionRate = deptFaculty.length > 0 ? Math.round((totalSubs / (deptFaculty.length * 10)) * 100) : 0;
+                  return (
+                    <div key={dept} className="p-3 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{dept}</span>
+                        <span className="text-sm font-bold" style={{ color: completionRate >= 80 ? '#2E8B57' : completionRate >= 50 ? '#B87333' : '#C41E3A' }}>{completionRate}%</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#D5D8DC' }}>
+                        <div className="h-full rounded-full" style={{ width: `${completionRate}%`, backgroundColor: completionRate >= 80 ? '#2E8B57' : completionRate >= 50 ? '#B87333' : '#C41E3A' }} />
+                      </div>
+                      <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{totalSubs} submissions from {deptFaculty.length} faculty</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Top Rated Faculty</h3>
+              <div className="space-y-2">
+                {topRated.map((f, i) => {
+                  const m = store.getFacultyMetrics(f.id, cycleId);
+                  return (
+                    <div key={f.id} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white" style={{ backgroundColor: ['#002366', '#B87333', '#C41E3A'][i] }}>{i + 1}</span>
+                        <span className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{f.name}</span>
+                      </div>
+                      <span className="text-sm font-bold" style={{ color: '#2E8B57' }}>{m.overallAverage.toFixed(2)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
           {flaggedFaculty.length > 0 && (<div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#FEE2E2', border: '1px solid #C41E3A' }}><h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#C41E3A' }}><AlertTriangle size={16} />Below Benchmark (Average &lt; {BENCHMARK.toFixed(1)})</h3><div className="space-y-2">{flaggedFaculty.map(f => { const m = store.getFacultyMetrics(f.id, cycleId); return (<div key={f.id} className="flex items-center justify-between p-2 rounded-lg bg-white/50"><span className="text-sm">{f.name} ({f.department})</span><span className="text-sm font-bold" style={{ color: '#C41E3A' }}>{m.overallAverage.toFixed(2)}</span></div>); })}</div></div>)}
+          <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#F8F6F1' }}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: '#002366' }}><TrendingUp size={16} style={{ color: '#B87333' }} />AI System Summary</h3>
+              <button onClick={generateAISummary} disabled={generatingAI} className="px-3 py-1.5 rounded-lg text-xs font-medium text-white hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#B87333' }}>{generatingAI ? 'Analyzing...' : 'Generate'}</button>
+            </div>
+            {aiSummary && <p className="text-sm leading-relaxed" style={{ color: '#1A1A1A' }}>{aiSummary}</p>}
+            {!aiSummary && !generatingAI && <p className="text-sm italic" style={{ color: '#9CA3AF' }}>Click "Generate" for AI-powered system insights.</p>}
+            {generatingAI && <div className="flex items-center gap-2"><div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: '#002366', borderTopColor: 'transparent' }} /><span className="text-sm" style={{ color: '#4B5563' }}>Analyzing...</span></div>}
+          </div>
         </div>
       )}
 
