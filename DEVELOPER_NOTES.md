@@ -1,490 +1,607 @@
-# AFES - Anonymous Faculty Evaluation System
-## Developer Documentation
+# AFES - Developer Guide & System Insights
 
-**Last Updated:** March 2026  
-**Stack:** React 18 + TypeScript + Vite + Tailwind CSS v4
+**Last Updated:** March 2026
 
 ---
 
-## 📋 Project Overview
+## 🎯 Why This System Exists
 
-AFES is a comprehensive faculty evaluation system that collects anonymous student feedback while guaranteeing privacy through PII stripping, identity decoupling, and aggregation thresholds.
+AFES solves a fundamental problem: **how do you collect honest student feedback about faculty while protecting student anonymity?**
 
-### Core Features
-- **Multi-role access:** Admin, Faculty, Student, Dean
-- **Anonymous submissions:** UUID-based, PII-stripped feedback
-- **Progressive survey reveal:** Sub-questions unlock sequentially with 5-second timers
-- **Sub-question level evaluation:** 15 sub-questions across 5 criteria (3 each)
-- **Dynamic reporting:** Excel exports reflect current viewing period
-- **AI-powered TNA:** Automated training needs analysis with editable recommendations
-- **Digital acknowledgment:** Faculty sign-off workflow with compliance tracking
-- **Audit logging:** Comprehensive action tracking with detailed context
+The challenge isn't just technical—it's psychological. Students won't give honest feedback if they fear retaliation or if their identity can be traced. So we built a system where:
+
+1. **Submissions are truly anonymous** - We use UUIDs, never store student IDs with evaluations
+2. **PII is automatically stripped** - Even if a student accidentally includes their name, we redact it
+3. **Small classes are protected** - We don't show metrics until 10+ submissions exist (prevents identification)
+4. **Audit trails exist without compromising privacy** - We log actions but never expose who submitted what
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Architecture Decisions & Why
 
-### File Structure
-```
-src/
-├── App.tsx                    # Main router with role-based routing
-├── auth.tsx                   # Auth context and provider
-├── store.ts                   # In-memory data store with pub/sub
-├── types.ts                   # TypeScript interfaces
-├── components/
-│   ├── Login.tsx              # Login with active period banner
-│   ├── Layout.tsx             # Navigation with period filter
-│   └── ConfirmDialog.tsx      # Themed confirmation modals
-├── pages/
-│   ├── StudentDashboard.tsx   # Course-first selection, progressive reveal
-│   ├── FacultyDashboard.tsx   # Metrics, charts, sign-off, print
-│   ├── AdminDashboard.tsx     # Full control, TNA, criteria management
-│   └── DeanDashboard.tsx      # Department aggregates only
-└── utils/
-    ├── pii.ts                 # PII detection and stripping
-    └── excel.ts               # ExcelJS export with professional styling
-```
+### Why In-Memory Store Instead of a Database?
 
-### Data Flow
-1. **Store Pattern:** In-memory with simulated API latency (300-500ms)
-2. **Pub/Sub Events:** `criteria_changed`, `cycle_changed`, `submission_added`, `acknowledgment_changed`, `training_changed`
-3. **Reactive Updates:** Components subscribe to relevant events and reload data
+**Decision:** All data lives in a JavaScript class instance (`src/store.ts`), not a real database.
+
+**Why:**
+- This is a **demo/prototype** - we wanted zero setup friction
+- Simulates real API latency (300-500ms delays) so you can test loading states
+- Makes it trivial to reset state (just refresh the page)
+- No need for backend infrastructure, migrations, or authentication servers
+
+**Trade-offs:**
+- Data disappears on refresh (no persistence)
+- Can't scale to real production use
+- All users see the same data (no multi-tenancy)
+
+**If you want to add a database:**
+- Replace `DataStore` class methods with API calls
+- Keep the same method signatures so UI code doesn't change
+- Add proper authentication (JWT tokens, etc.)
+- Implement row-level security for multi-tenant scenarios
 
 ---
 
-## 🔐 Privacy & Security
+### Why Pub/Sub Event System?
 
-### PII Stripping (`src/utils/pii.ts`)
-- **Regex patterns:** Email, phone, SSN, student IDs (C24-XXX), URLs
-- **Name detection:** Common first/last names keyword list
-- **Replacement tokens:** `[REDACTED_EMAIL]`, `[REDACTED_NAME]`, etc.
-- **Applied to:** All free-text feedback before storage
+**Decision:** Components subscribe to events like `submission_added`, `criteria_changed`, etc.
 
-### Identity Decoupling
-- Submissions stored with UUID, never student ID
-- No mapping between student and submissions exposed
-- Session tracking uses in-memory Set (cleared on refresh)
-
-### Aggregation Threshold
-- **Threshold:** 10 submissions minimum
-- **Enforcement:** Faculty metrics return "Insufficient Data" below threshold
-- **Rationale:** Protects individual anonymity in small classes
-
-### Rate Limiting
-- 100 requests per minute per student
-- Tracked via `rateLimits` Map in store
-
----
-
-## 📊 Data Model
-
-### Evaluation Cycles
-```typescript
-interface EvaluationCycle {
-  id: string;
-  name: string;              // Internal: "Spring 2026 Midterm"
-  displayName: string;       // Public: "AY 2025–2026 | Second Semester"
-  startDate: string;
-  endDate: string;
-  status: 'active' | 'upcoming' | 'completed' | 'archived';
-}
-```
-
-### Criteria & Sub-Questions
-```typescript
-interface Criterion {
-  id: string;                // e.g., "crit-clarity"
-  name: string;              // e.g., "Clarity"
-  order: number;
-}
-
-interface SubQuestion {
-  id: string;                // e.g., "sq-clarity-1"
-  criterionId: string;       // Links to parent criterion
-  text: string;              // Actual survey question
-  order: number;
-}
-```
-
-**Default Structure:**
-- 5 criteria: Clarity, Pacing, Engagement, Assessment Fairness, Workload
-- 3 sub-questions per criterion (15 total)
-- Sub-question averages roll up to criterion averages
-
-### Evaluation
-```typescript
-interface Evaluation {
-  id: string;                // UUID (anonymous)
-  facultyId: string;
-  courseId: string;
-  cycleId: string;
-  ratings: Record<string, number>;  // subQuestionId → rating (1-5)
-  feedback: string;          // PII-stripped
-  submittedAt: string;
-}
-```
-
-### Faculty
-```typescript
-interface Faculty {
-  id: string;
-  name: string;
-  department: string;
-  title: string;
-  courses: string[];
-  acknowledgmentStatus: 'pending_review' | 'pending_acknowledgment' | 'acknowledged';
-  acknowledgedAt?: string;
-  acknowledgedBy?: string;
-}
-```
-
-### Student
-```typescript
-interface Student {
-  id: string;                // e.g., "C24-001"
-  name: string;
-  enrolledCourses: string[]; // Courses for active cycle
-}
-```
-
----
-
-## 🎯 Key Features
-
-### 1. Progressive Survey Reveal (Student Dashboard)
-**Flow:**
-1. Student selects course → faculty auto-bound
-2. First sub-question unlocks after 5 seconds
-3. Student rates → next sub-question unlocks after 5 seconds
-4. Continue until all 15 sub-questions rated
-5. Optional feedback (PII warnings shown if detected)
-6. Submit → anonymous storage
-
-**Implementation:**
-- `unlockedSQs` Set tracks unlocked sub-questions
-- `countdown` state for timer display
-- `handleRating()` triggers next unlock
-
-### 2. Dynamic Excel Export (`src/utils/excel.ts`)
-**5 Professional Sheets:**
-1. **Cover:** Faculty info, summary stats, score distribution
-2. **Criteria Analysis:** Hierarchical criteria → sub-questions with color-coded scores
-3. **Course Performance:** Per-course breakdown with totals
-4. **Student Feedback:** PII-redacted feedback with dates
-5. **Feedback Summary:** Analytical metrics and percentages
-
-**Styling:**
-- Royal blue headers, copper-tinted sub-headers
-- Alternating row backgrounds
-- Score-based color coding (emerald ≥4.0, crimson <3.0)
-- Tab colors for easy navigation
-
-**Dynamic Data:**
-- Accepts `cycleId` parameter
-- Reflects current viewing period filter
-- File naming includes period: `AFES_Dr_Sarah_Chen_AY_2025_2026_Second_Semester_2026-03-20.xlsx`
-
-### 3. AI-Powered TNA (Training Needs Analysis)
-**Location:** Admin Dashboard → TNA tab
+**Why:**
+- **Reactive updates** - When a student submits an evaluation, all dashboards automatically refresh
+- **Decoupled architecture** - The student dashboard doesn't need to know the admin dashboard exists
+- **Simple to implement** - No need for complex state management libraries like Redux
 
 **How it works:**
-1. Identifies criteria below 3.0 benchmark
-2. Analyzes sub-question scores within each criterion
-3. Generates specific, actionable recommendations
-4. Prioritizes by severity (lowest scores first)
-
-**Recommendation Structure:**
+```typescript
+// In a component:
+useEffect(() => {
+  loadData(); // Initial load
+  const unsub = store.subscribe('submission_added', loadData);
+  return () => unsub(); // Cleanup on unmount
+}, []);
 ```
-**Criterion Name (Score/5.0)**
-[Explanation of what students reported]
 
-Recommended actions:
-• [Specific classroom strategy based on sub-question feedback]
-• [Another targeted action]
-• [Third action]
+**Gotcha:** If you forget to unsubscribe, you'll get memory leaks and stale data. Always return the cleanup function.
 
-Why this matters: [Pedagogical reasoning]
+---
+
+### Why Sub-Questions Instead of Just Criteria?
+
+**Decision:** Each criterion (e.g., "Clarity") has 3 sub-questions that students rate individually.
+
+**Why:**
+- **Granular feedback** - "Clarity" is too vague. Are students confused by lectures? Instructions? Terminology?
+- **Actionable insights** - The AI can say "Students struggle with assignment instructions" instead of just "Clarity is low"
+- **Better TNA recommendations** - We can target specific teaching behaviors, not just abstract qualities
+
+**How it works:**
 ```
+Criterion: "Clarity" (avg: 3.2)
+  ├─ Sub-Q 1: "Explains concepts clearly" (avg: 3.8)
+  ├─ Sub-Q 2: "Uses appropriate language" (avg: 3.1)
+  └─ Sub-Q 3: "Provides clear instructions" (avg: 2.7) ← Problem!
+```
+
+**Trade-off:** More data to manage, but the insights are worth it.
+
+---
+
+### Why Progressive Survey Reveal?
+
+**Decision:** Sub-questions unlock one at a time with 5-second delays.
+
+**Why:**
+- **Prevents rushing** - Students can't just click "5" for everything
+- **Encourages thoughtful responses** - Forces them to consider each question
+- **Reduces survey fatigue** - Breaking it into chunks feels less overwhelming
+
+**Implementation:**
+```typescript
+const [unlockedSQs, setUnlockedSQs] = useState<Set<string>>(new Set());
+const [countdown, setCountdown] = useState<number | null>(null);
+
+// When student rates a sub-question:
+const handleRating = (sqId: string, rating: number) => {
+  setRatings(prev => ({ ...prev, [sqId]: rating }));
+  
+  // Find next sub-question and start countdown
+  const nextSQ = subQuestions[currentIndex + 1];
+  if (nextSQ && !unlockedSQs.has(nextSQ.id)) {
+    setCountdown(5);
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setUnlockedSQs(prevSet => new Set([...prevSet, nextSQ.id]));
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }
+};
+```
+
+**Gotcha:** The timer resets if the student changes their selection. This is intentional—it prevents gaming the system.
+
+---
+
+### Why Course-First Selection (Not Faculty-First)?
+
+**Decision:** Students select a course first, then the faculty is auto-bound.
+
+**Why:**
+- **Students think in courses, not faculty** - "I'm taking CS101" not "I'm being taught by Dr. Chen"
+- **Prevents confusion** - Some faculty teach multiple courses; this avoids ambiguity
+- **Enables enrollment validation** - We can check if the student is actually enrolled in that course
+
+**Implementation:**
+```typescript
+// Student selects course
+const handleCourseSelect = (courseId: string) => {
+  setSelectedCourse(courseId);
+  
+  // Auto-bind faculty
+  const course = availableCourses.find(c => c.courseId === courseId);
+  if (course) {
+    setBoundFacultyId(course.facultyId);
+    setBoundFacultyName(course.facultyName);
+  }
+};
+```
+
+**Trade-off:** The faculty field is disabled (read-only), which some users find confusing. We added a note: "Select a course first..."
+
+---
+
+### Why AI-Generated TNA Instead of Predefined Modules?
+
+**Decision:** Training recommendations are generated dynamically based on actual evaluation data, not selected from a dropdown.
+
+**Why:**
+- **Contextual** - "Your engagement score is 2.4 because students say lectures feel passive" is more useful than "Take Engagement Workshop 101"
+- **Actionable** - Specific suggestions like "use think-pair-share techniques" vs. vague "improve engagement"
+- **Editable** - Admins can override AI suggestions if they know better
+- **Scalable** - No need to maintain a library of training modules
+
+**How it works:**
+```typescript
+function generateTrainingRecommendation(facultyName, lowCriteria, subQuestionData) {
+  // Sort by severity (lowest scores first)
+  const sortedCriteria = [...lowCriteria].sort((a, b) => a.avg - b.avg);
+  
+  sortedCriteria.forEach(({ name, avg }) => {
+    // Find which sub-questions are dragging down the score
+    const lowSubQuestions = subQuestionData.find(c => c.criterionName === name)
+      ?.subQuestions.filter(sq => sq.avg < 3.0);
+    
+    // Generate specific recommendations based on sub-question patterns
+    if (lowSubQuestions.some(sq => sq.text.includes('interactive'))) {
+      recommendations.push('Replace 10 minutes of lecture with active learning activities');
+    }
+  });
+}
+```
+
+**Trade-off:** The "AI" is just a switch/case statement, not a real LLM. But it's good enough for a demo and shows the concept.
+
+---
+
+## 🔐 Privacy Deep Dive
+
+### How PII Stripping Actually Works
+
+**Location:** `src/utils/pii.ts`
+
+**What it catches:**
+- Emails: `john@example.com` → `[REDACTED_EMAIL]`
+- Phone numbers: `(555) 123-4567` → `[REDACTED_PHONE]`
+- Student IDs: `C24-001` → `[REDACTED_STUDENT_ID]`
+- SSNs: `123-45-6789` → `[REDACTED_SSN]`
+- URLs: `https://example.com` → `[REDACTED_URL]`
+- Names: `John`, `Smith`, `Chen` → `[REDACTED_NAME]`
+
+**How it works:**
+```typescript
+export function stripPII(text: string): string {
+  let result = text;
+  
+  // Apply regex patterns
+  PII_PATTERNS.forEach(({ pattern, replacement }) => {
+    result = result.replace(pattern, replacement);
+  });
+  
+  // Check for common names (case-insensitive, whole word)
+  COMMON_NAMES.forEach(name => {
+    const namePattern = new RegExp(`\\b${name}\\b`, 'gi');
+    result = result.replace(namePattern, '[REDACTED_NAME]');
+  });
+  
+  return result;
+}
+```
+
+**Gotcha:** The name list is hardcoded. If a student writes "I talked to Professor Rodriguez about this," it won't be caught. You'd need NLP or a more comprehensive name database.
+
+**Why we show PII warnings:**
+- Transparency - Students should know we're redacting their feedback
+- Education - Helps them understand what counts as PII
+- Trust - Shows we're not secretly collecting their data
+
+---
+
+### Why the 10-Submission Threshold?
+
+**Decision:** Faculty metrics only display after 10+ submissions.
+
+**Why:**
+- **Statistical significance** - 3 submissions isn't enough to draw conclusions
+- **Privacy protection** - In a class of 8 students, showing "average: 4.5" makes it obvious who gave what rating
+- **Prevents harassment** - Faculty can't pressure individual students to change their ratings
+
+**Implementation:**
+```typescript
+getFacultyMetrics(facultyId: string, cycleId?: string): FacultyMetrics {
+  const evals = this.getEvaluationsForFaculty(facultyId, cycleId);
+  
+  if (evals.length < 10) {
+    return {
+      totalSubmissions: evals.length,
+      overallAverage: 0, // Not calculated
+      criteriaAverages: {}, // Not calculated
+      // ... other fields
+    };
+  }
+  
+  // Calculate metrics...
+}
+```
+
+**UI handling:**
+```typescript
+if (metrics.totalSubmissions < THRESHOLD) {
+  return <div>Insufficient Data ({THRESHOLD - metrics.totalSubmissions} more needed)</div>;
+}
+```
+
+**Trade-off:** New faculty or small classes won't see feedback until they hit the threshold. This is intentional—we prioritize privacy over immediate feedback.
+
+---
+
+## 📊 Excel Export: Why It's Complex
+
+**Location:** `src/utils/excel.ts`
+
+**Why ExcelJS instead of a simpler library?**
+- Professional styling (colors, borders, merged cells)
+- Multiple sheets with different layouts
+- Tab colors for easy navigation
+- Handles large datasets efficiently
+
+**The 5-sheet structure:**
+1. **Cover** - Executive summary for busy administrators
+2. **Criteria Analysis** - Deep dive for faculty improvement
+3. **Course Performance** - Compare across courses
+4. **Student Feedback** - Qualitative insights (PII-redacted)
+5. **Feedback Summary** - Statistical overview
+
+**Why color-coded scores?**
+- **Emerald (≥4.0)** - Excellent, no action needed
+- **Royal Blue (3.0-3.99)** - Good, minor improvements possible
+- **Copper (2.0-2.99)** - Needs attention
+- **Crimson (<2.0)** - Critical, immediate action required
+
+**Dynamic data flow:**
+```typescript
+export async function exportFacultyReport(facultyId: string, cycleId?: string) {
+  // Get data for the specific cycle
+  const metrics = store.getFacultyMetrics(facultyId, cycleId);
+  
+  // Generate workbook
+  const workbook = new ExcelJS.Workbook();
+  await addCoverSheet(workbook, faculty, cycle, metrics);
+  await addCriteriaSheet(workbook, metrics, criteria, subQuestions);
+  // ... more sheets
+  
+  // Download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `AFES_Report_...`;
+  link.click();
+}
+```
+
+**Gotcha:** ExcelJS is ~1MB. If bundle size is a concern, consider lazy-loading or switching to a lighter library like `xlsx` (SheetJS).
+
+---
+
+## 🎯 Common Debugging Scenarios
+
+### "My changes aren't showing up"
+
+**Check:**
+1. Did you subscribe to the right event?
+   ```typescript
+   store.subscribe('submission_added', loadData); // ✓
+   store.subscribe('submission_added', loadData); // ✗ Forgot to unsubscribe
+   ```
+
+2. Are you mutating state directly?
+   ```typescript
+   this.faculty.push(newFaculty); // ✗ Mutates original array
+   this.faculty = [...this.faculty, newFaculty]; // ✓ Creates new array
+   ```
+
+3. Did you emit the event?
+   ```typescript
+   this.evaluations.push(evaluation);
+   this.emit('submission_added'); // ← Don't forget this!
+   ```
+
+---
+
+### "The Excel file is empty"
+
+**Check:**
+1. Is the faculty ID correct?
+   ```typescript
+   const faculty = store.getFacultyById(facultyId);
+   if (!faculty) {
+     console.error('Faculty not found:', facultyId);
+     return;
+   }
+   ```
+
+2. Are there evaluations for this cycle?
+   ```typescript
+   const metrics = store.getFacultyMetrics(facultyId, cycleId);
+   console.log('Submissions:', metrics.totalSubmissions); // Should be > 0
+   ```
+
+3. Is the cycle ID valid?
+   ```typescript
+   const cycle = store.getCycles().find(c => c.id === cycleId);
+   if (!cycle) {
+     console.error('Cycle not found:', cycleId);
+   }
+   ```
+
+---
+
+### "Sub-questions aren't unlocking"
+
+**Check:**
+1. Is the countdown timer running?
+   ```typescript
+   console.log('Countdown:', countdown); // Should be 5, 4, 3, 2, 1, null
+   ```
+
+2. Is the sub-question ID in the unlocked set?
+   ```typescript
+   console.log('Unlocked:', unlockedSQs); // Should grow over time
+   ```
+
+3. Did you call `handleRating()` when the student clicks?
+   ```typescript
+   <button onClick={() => handleRating(sq.id, rating)}>
+   ```
+
+---
+
+## 🚀 Performance Considerations
+
+### Why Simulated Latency?
+
+**Decision:** Every store method has `await this.simulateLatency()` (300-500ms delay).
+
+**Why:**
+- Tests loading states in the UI
+- Simulates real-world API calls
+- Prevents "it works on my machine" syndrome
+
+**Trade-off:** Makes the demo feel slower than production would be.
+
+**To remove for production:**
+```typescript
+private async simulateLatency(): Promise<void> {
+  // return new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
+  return Promise.resolve(); // Instant
+}
+```
+
+---
+
+### Why Not Use React Query or SWR?
+
+**Decision:** We use plain `useState` + `useEffect` + pub/sub.
+
+**Why:**
+- Simpler to understand for developers new to the project
+- No additional dependencies
+- Fine for a demo with in-memory data
+
+**When you'd want React Query:**
+- Real API calls with caching
+- Automatic refetching on window focus
+- Optimistic updates
+- Pagination and infinite scroll
+
+---
+
+## 💡 Design Patterns Used
+
+### 1. Singleton Store
+```typescript
+class DataStore {
+  // All data and methods in one place
+}
+
+export const store = new DataStore(); // Single instance
+```
+
+**Why:** Ensures all components see the same data. No need for context providers or prop drilling.
+
+**Trade-off:** Harder to test (can't easily mock the store).
+
+---
+
+### 2. Immutable Updates
+```typescript
+// ✗ Bad - mutates original
+this.faculty[0].name = 'New Name';
+
+// ✓ Good - creates new object
+this.faculty = this.faculty.map(f => 
+  f.id === facultyId ? { ...f, name: 'New Name' } : f
+);
+```
+
+**Why:** React relies on reference equality to detect changes. Mutating objects directly won't trigger re-renders.
+
+---
+
+### 3. Event-Driven Updates
+```typescript
+// Publisher (store):
+this.evaluations.push(evaluation);
+this.emit('submission_added');
+
+// Subscriber (component):
+const unsub = store.subscribe('submission_added', loadData);
+```
+
+**Why:** Decouples components. The student dashboard doesn't need to know the admin dashboard exists.
+
+---
+
+## 🔮 Future Enhancements & How to Implement
+
+### Add Real Database
+
+**Steps:**
+1. Create API endpoints (REST or GraphQL)
+2. Replace `DataStore` methods with `fetch()` calls
+3. Add authentication (JWT, OAuth, etc.)
+4. Implement row-level security for multi-tenancy
+5. Add database migrations
 
 **Example:**
-```
-**Engagement (2.45/5.0)**
-Students report the learning environment feels passive...
-
-Recommended actions:
-• Replace 10 minutes of lecture with active learning activities
-• Use think-pair-share techniques
-• Incorporate case studies and group work
-
-Why this matters: Passive learning leads to lower retention...
-```
-
-**Admin Control:**
-- Can edit any AI recommendation
-- Edited recommendations marked as "Admin-Edited"
-- Can delete and regenerate
-
-### 4. Sub-Question Management (Admin Dashboard → Criteria tab)
-**Features:**
-- Expandable sections for each criterion
-- Add new sub-questions via input field
-- Delete sub-questions with trash icon
-- Auto-reorders remaining sub-questions
-- Shows count of sub-questions per criterion
-
-**Implementation:**
-- `expandedCriteria` Set tracks which criteria are expanded
-- `newSubQs` Record stores input values per criterion
-- `store.addSubQuestion()` and `store.removeSubQuestion()` methods
-
-### 5. Digital Acknowledgment (Faculty Dashboard)
-**Workflow:**
-1. Faculty views evaluation report
-2. Clicks "Sign & Acknowledge" button
-3. Password verification modal appears
-4. Submits password → status updates to "acknowledged"
-5. Timestamp and verifier recorded
-
-**Compliance Tracking:**
-- Admin sees acknowledgment status in faculty table
-- Dean sees department-level compliance gauge
-- Status: Pending Review → Pending Acknowledgment → Acknowledged
-
-### 6. Viewing Period Filter (All dashboards except Student)
-**Location:** Sticky header below navigation
-
-**Features:**
-- Dropdown shows all completed/archived cycles
-- Switching period updates all charts, metrics, feedback
-- Shows "⚠️ Viewing Archived Evaluation Data" warning
-- Does NOT change active system period (admin-only action)
-
-**Implementation:**
-- `viewingCycleId` state in App.tsx
-- Passed to Layout and dashboards via props
-- Excel export uses `cycleId` parameter
-
----
-
-## 🔑 Test Credentials
-
-| Role | Username | Password | Access |
-|------|----------|----------|--------|
-| Admin | `admin` | `admin` | Full system control |
-| Faculty | `faculty` | `faculty` | Dr. Sarah Chen (F001) |
-| Student | `C24-001` through `C24-012` | `pass123` | Submit evaluations |
-| Dean | `M001`, `M002`, `M003` | `dean123` | Department aggregates |
-
-**Student Enrollment Example:**
-- C24-001 (Alice Johnson): CS101, MATH101, PHYS101
-- C24-002 (Bob Smith): CS101, CS201, MATH101
-
----
-
-## 🎨 Design System
-
-### Color Palette
-```css
-Primary: Royal Blue #002366 (nav, buttons)
-Secondary: Copper Bronze #B87333 (accents, icons)
-Accent: Crimson Red #C41E3A (alerts, CTAs)
-Neutral Light: Warm Stone #EDEBE8 (card backgrounds)
-Neutral Dark: Charcoal #1A1A1A (footer, text)
-Background: Muted Slate #D5D8DC (page background)
-Success: Emerald #2E8B57 (positive states)
-Cream: #F8F6F1 (alternate cards)
-Copper Tint: #F5E6D3 (highlights, badges)
-```
-
-### Logo
-"W" in rounded square with royal blue gradient, copper border, Georgia serif font
-
-### Visual Style
-- NO pure white backgrounds (use #EDEBE8 or #F8F6F1)
-- Soft shadows, rounded corners (xl)
-- Custom scrollbars (thin, slate-colored)
-- Smooth transitions (0.2s ease)
-- Focus-visible: 2px royal blue outline
-
----
-
-## 📈 Seed Data
-
-### Faculty (5)
-- F001: Dr. Sarah Chen (CS, Associate Prof) - 14 submissions, high performer
-- F002: Dr. James Wilson (CS, Professor) - 12 submissions, pacing issues
-- F003: Dr. Maria Garcia (Math, Assistant Prof) - 11 submissions, engagement/assessment issues
-- F004: Dr. Robert Kim (Math, Professor) - 7 submissions (below threshold)
-- F005: Dr. Emily Thompson (Physics, Associate Prof) - 5 submissions, workload issues
-
-### Cycles (5)
-- cyc-001: Spring 2026 Midterm (ACTIVE) - AY 2025–2026 | Second Semester
-- cyc-002: Spring 2026 Final (UPCOMING)
-- cyc-003: Fall 2025 Final (COMPLETED)
-- cyc-004: Fall 2025 Midterm (ARCHIVED)
-- cyc-005: Spring 2025 Final (ARCHIVED)
-
-### Evaluations
-- 51 total seed evaluations distributed across cycles
-- Ratings generated with intentional patterns (some faculty have low scores in specific criteria)
-
----
-
-## ⚙️ Important Implementation Details
-
-### Store Methods
 ```typescript
-// Auth
-store.authenticate(username, password)
+// Before:
+async authenticate(username: string, password: string): Promise<User | null> {
+  await this.simulateLatency();
+  return this.users.find(u => u.username === username && u.password === password);
+}
 
-// Faculty
-store.getFaculty()
-store.getFacultyById(id)
-store.getFacultyByDepartment(dept)
-store.acknowledgeFaculty(facultyId, verifiedBy)
-
-// Cycles
-store.getCycles()
-store.getActiveCycle()
-store.addCycle(cycle)
-store.activateCycle(cycleId)
-store.archiveCycle(cycleId)
-store.removeCycle(cycleId)
-
-// Criteria & Sub-Questions
-store.getCriteria()
-store.getSubQuestions()
-store.getSubQuestionsForCriterion(criterionId)
-store.addCriterion(name)
-store.removeCriterion(criterionId)
-store.addSubQuestion(criterionId, text)
-store.removeSubQuestion(sqId)
-
-// Evaluations
-store.submitEvaluation(data, studentId?)
-store.getFacultyMetrics(facultyId, cycleId?, courseId?)
-store.getDepartmentMetrics(dept, cycleId?)
-
-// TNA
-store.generateTrainingRecommendation(facultyId, cycleId?)
-store.getTrainingRecommendationForFaculty(facultyId, cycleId?)
-store.updateTrainingRecommendation(recId, newRecommendation)
-store.deleteTrainingRecommendation(recId)
-
-// Students
-store.getAvailableCoursesForStudent(studentId)
-store.isCourseEvaluatedByStudent(studentId, courseId)
+// After:
+async authenticate(username: string, password: string): Promise<User | null> {
+  const response = await fetch('/api/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  });
+  return response.json();
+}
 ```
 
-### Metrics Calculation
+---
+
+### Add Real LLM for TNA
+
+**Steps:**
+1. Integrate OpenAI API (or similar)
+2. Send evaluation data + sub-question scores to LLM
+3. Parse response and store as recommendation
+4. Add error handling for API failures
+
+**Example:**
 ```typescript
-// Sub-question averages
-sqAvgs[sq.id] = total / count
-
-// Criterion averages (from sub-questions)
-critAvgs[c.id] = sum(subQuestionAvgs) / subQuestionCount
-
-// Overall average
-overallAvg = sum(evalAverages) / evalCount
+async generateTrainingRecommendation(facultyId: string, cycleId?: string) {
+  const metrics = this.getFacultyMetrics(facultyId, cycleId);
+  const lowCriteria = /* ... */;
+  
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an educational consultant. Analyze faculty evaluation data and provide specific, actionable training recommendations.'
+        },
+        {
+          role: 'user',
+          content: `Faculty: ${faculty.name}\nLow criteria: ${JSON.stringify(lowCriteria)}\n\nProvide specific recommendations.`
+        }
+      ],
+    }),
+  });
+  
+  const data = await response.json();
+  const recommendation = data.choices[0].message.content;
+  
+  // Store recommendation...
+}
 ```
 
-### Event Subscription Pattern
+---
+
+### Add Email Notifications
+
+**Steps:**
+1. Integrate email service (SendGrid, AWS SES, etc.)
+2. Trigger emails on key events (new submission, acknowledgment due, etc.)
+3. Add email preferences (opt-in/opt-out)
+4. Handle email templates
+
+**Example:**
 ```typescript
-useEffect(() => {
-  loadData();
-  const unsubs = [
-    store.subscribe('submission_added', loadData),
-    store.subscribe('criteria_changed', loadData),
-  ];
-  return () => unsubs.forEach(u => u());
-}, [loadData]);
+async submitEvaluation(data, studentId) {
+  // ... existing code ...
+  
+  // Send notification to faculty
+  await sendEmail({
+    to: faculty.email,
+    subject: 'New Evaluation Submitted',
+    body: `A student has submitted an evaluation for your course ${data.courseId}.`,
+  });
+}
 ```
 
 ---
 
-## 🐛 Known Constraints
+## 📝 Final Notes
 
-1. **In-Memory Store:** Data resets on page refresh (no persistence)
-2. **Single Active Cycle:** Only one cycle can be active at a time
-3. **Student Session Tracking:** Evaluated courses tracked in memory only (cleared on refresh)
-4. **AI Recommendations:** Simulated with switch/case logic (not actual LLM)
-5. **Excel Export:** Uses ExcelJS library (large bundle size ~1.6MB)
-6. **Print Layout:** Basic CSS print styles (may need refinement)
+### What Makes This System Unique
 
----
+1. **Privacy-first design** - Every feature considers anonymity
+2. **Granular feedback** - Sub-questions provide actionable insights
+3. **AI-powered TNA** - Contextual recommendations, not generic advice
+4. **Professional reporting** - Excel exports that administrators actually want to use
+5. **Comprehensive audit trails** - Full transparency without compromising privacy
 
-## 🔧 Common Tasks
+### Common Misconceptions
 
-### Add New Criterion
-1. Admin Dashboard → Criteria tab
-2. Enter name in "Add New Criterion" input
-3. Click "Add"
-4. Expand the new criterion → "Manage Sub-Qs"
-5. Add sub-questions one by one
+- **"Students can be identified"** - No, submissions use UUIDs and PII is stripped
+- **"Small classes are unprotected"** - No, the 10-submission threshold prevents identification
+- **"AI recommendations are generic"** - No, they're based on actual sub-question scores
+- **"Excel exports are static"** - No, they reflect the current viewing period
 
-### Generate TNA Recommendation
-1. Admin Dashboard → TNA tab
-2. Find faculty below benchmark
-3. Click "Generate AI Recommendation"
-4. Review/edit as needed
-5. Save changes
+### If You're Stuck
 
-### Export Faculty Report
-1. Admin Dashboard → Faculty tab → Click "Export XLSX" button
-2. OR Faculty Dashboard → Click "Export XLSX" button
-3. File downloads with current viewing period data
-
-### Switch Viewing Period
-1. Use dropdown in sticky header (below navigation)
-2. Select desired cycle
-3. All dashboards update automatically
-4. Warning appears if viewing archived data
+1. **Check the audit log** - It shows exactly what happened and when
+2. **Review the store methods** - All data operations are in `src/store.ts`
+3. **Look at the types** - `src/types.ts` defines all data structures
+4. **Check the console** - Most errors are logged with context
 
 ---
 
-## 📝 Audit Log Details
+**End of Developer Guide**
 
-All actions include comprehensive context:
-- **Login:** Role, department, failed attempt details
-- **Submission:** Faculty name, course, cycle, avg rating, feedback length
-- **Cycle ops:** Previous active cycle, evaluation counts, dates
-- **Criterion changes:** Names, IDs, sub-question counts
-- **Acknowledgments:** Faculty name, verifier, timestamp
-- **TNA ops:** AI generation details, low criteria scores, admin edits
-
-Example:
-```
-Timestamp: 2026-03-20 14:32:15
-Actor: student:anonymous
-Action: submission
-Target: F001
-Details: Evaluation submitted — Faculty: "Dr. Sarah Chen", Course: CS101, 
-         Cycle: cyc-001, Avg Rating: 4.67, Feedback length: 45 chars
-```
-
----
-
-## 🚀 Future Enhancements (Not Implemented)
-
-- Persistent storage (database integration)
-- Real LLM integration for TNA
-- Bulk export for all faculty
-- Department-level Excel exports
-- Advanced analytics (trend analysis, comparisons)
-- Email notifications for acknowledgments
-- Multi-language support
-- Accessibility improvements (WCAG compliance)
-
----
-
-## 📞 Support
-
-For questions or issues:
-1. Check audit log for action details
-2. Review store methods in `src/store.ts`
-3. Check type definitions in `src/types.ts`
-4. Review component props and state management
-
----
-
-**End of Documentation**
+*This document explains the "why" behind the system. For the "what" and "how," see the code itself.*
