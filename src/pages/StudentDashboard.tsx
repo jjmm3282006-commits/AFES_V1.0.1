@@ -96,7 +96,7 @@ export default function StudentDashboard() {
         </div>
         {selectedCourse && (
           <>
-            <div className="mb-4 flex items-center gap-1 text-sm" style={{ color: '#1A1A1A' }}><Eye size={14} style={{ color: '#B87333' }} />Rate each question on a scale of 1-10 (1 = Poor, 10 = Excellent)</div>
+            <div className="mb-4 flex items-center gap-1 text-sm" style={{ color: '#1A1A1A' }}><Eye size={14} style={{ color: '#B87333' }} />Rate each question on a scale of 1-5 (1 = Poor, 5 = Excellent)</div>
             <div className="space-y-4 mb-6">
               {subQsByCriterion.map(({ criterion, subQuestions: sqs }) => (
                 <div key={criterion.id} className="rounded-lg p-3" style={{ backgroundColor: '#F8F6F1' }}>
@@ -107,7 +107,7 @@ export default function StudentDashboard() {
                         <div className="flex items-center gap-2 flex-1 min-w-0"><span className="text-xs" style={{ color: '#1A1A1A' }}>{sq.text}</span></div>
                         <select value={ratings[sq.id] || ''} onChange={e => handleRatingChange(sq.id, e.target.value)} className="px-2 py-1 rounded border text-sm outline-none min-w-[80px]" style={{ backgroundColor: '#EDEBE8', borderColor: '#D5D8DC' }}>
                           <option value="">--</option>
-                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (<option key={n} value={n}>{n}</option>))}
+                          {[1, 2, 3, 4, 5].map(n => (<option key={n} value={n}>{n}</option>))}
                         </select>
                       </div>
                     ))}

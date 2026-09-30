@@ -6,7 +6,7 @@ import type { Faculty, EvaluationCycle, Criterion, AuditLogEntry, SubQuestion, T
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { LayoutDashboard, Users, Calendar, ListChecks, ScrollText, Plus, Trash2, Search, AlertTriangle, CheckCircle, TrendingUp, Shield, FileSpreadsheet, GraduationCap, Edit3, Sparkles, Download, BarChart3 } from 'lucide-react';
 
-const PIE_COLORS = ['#2E8B57', '#002366', '#B87333', '#C41E3A'];
+const STAR_COLORS = ['#C41E3A', '#B87333', '#D5D8DC', '#002366', '#2E8B57']; // 1★ to 5★
 
 type Tab = 'overview' | 'faculty' | 'cycles' | 'criteria' | 'tna' | 'audit';
 interface AdminDashboardProps { viewingCycleId?: string; }

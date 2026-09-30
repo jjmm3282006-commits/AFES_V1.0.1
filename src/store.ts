@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { User, Faculty, Student, Dean, EvaluationCycle, Criterion, SubQuestion, Evaluation, AuditLogEntry, RateLimitEntry, FacultyMetrics, EventType, TrainingRecommendation } from './types';
 
-const BENCHMARK = 6.0;
+const BENCHMARK = 3.0;
 const THRESHOLD = 10;
 
 const SUB_QUESTIONS: SubQuestion[] = [
@@ -422,7 +422,7 @@ class DataStore {
     const criteria = this.getCriteria();
     const subQuestions = this.getSubQuestions();
     const sqTotals: Record<string, { total: number; count: number }> = {};
-    const scoreDistribution = Array(10).fill(0);
+    const scoreDistribution = Array(5).fill(0);
     const courseBreakdown: Record<string, { count: number; total: number }> = {};
 
     evals.forEach(ev => {
@@ -431,7 +431,7 @@ class DataStore {
         if (!sqTotals[sqId]) sqTotals[sqId] = { total: 0, count: 0 };
         sqTotals[sqId].total += rating;
         sqTotals[sqId].count++;
-        if (rating >= 1 && rating <= 10) scoreDistribution[rating - 1]++;
+        if (rating >= 1 && rating <= 5) scoreDistribution[rating - 1]++;
         evalTotal += rating;
         evalCount++;
       });
