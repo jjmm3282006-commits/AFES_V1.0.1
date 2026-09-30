@@ -26,18 +26,107 @@ export default function DeanPrintReport({ department, cycleName, criteria }: Dea
   const strengths = critData.filter(c => c.avg >= 4.0).sort((a, b) => b.avg - a.avg);
   const improvements = critData.filter(c => c.avg < BENCHMARK && c.avg > 0).sort((a, b) => a.avg - b.avg);
 
+  // Inline styles for print document
+  const styles = {
+    page: {
+      fontFamily: 'Georgia, serif',
+      color: '#1A1A1A',
+      lineHeight: 1.6,
+      padding: '0',
+      maxWidth: '8.5in',
+      margin: '0 auto',
+      backgroundColor: 'white',
+    },
+    header: {
+      borderBottom: '3px solid #002366',
+      paddingBottom: '20px',
+      marginBottom: '30px',
+    },
+    title: {
+      fontSize: '28pt',
+      fontWeight: 'bold',
+      color: '#002366',
+      margin: '0 0 8px 0',
+      fontFamily: 'Georgia, serif',
+    },
+    subtitle: {
+      fontSize: '14pt',
+      color: '#B87333',
+      margin: '0',
+      fontStyle: 'italic',
+    },
+    section: {
+      marginBottom: '30px',
+      breakInside: 'avoid' as any,
+    },
+    sectionTitle: {
+      fontSize: '16pt',
+      fontWeight: 'bold',
+      color: '#002366',
+      borderBottom: '2px solid #B87333',
+      paddingBottom: '8px',
+      marginBottom: '15px',
+    },
+    table: {
+      width: '100%',
+      borderCollapse: 'collapse' as const,
+      marginBottom: '15px',
+      fontSize: '11pt',
+    },
+    th: {
+      backgroundColor: '#002366',
+      color: 'white',
+      padding: '10px',
+      textAlign: 'left' as const,
+      fontWeight: 'bold',
+      border: '1px solid #002366',
+    },
+    td: {
+      padding: '10px',
+      border: '1px solid #D5D8DC',
+    },
+    metricBox: {
+      display: 'inline-block',
+      width: '22%',
+      margin: '0 1% 15px 0',
+      padding: '15px',
+      border: '2px solid #D5D8DC',
+      textAlign: 'center' as const,
+      verticalAlign: 'top' as const,
+    },
+    metricValue: {
+      fontSize: '24pt',
+      fontWeight: 'bold',
+      margin: '8px 0',
+    },
+    metricLabel: {
+      fontSize: '10pt',
+      color: '#6B7280',
+      textTransform: 'uppercase' as const,
+      letterSpacing: '1px',
+    },
+    footer: {
+      borderTop: '2px solid #002366',
+      paddingTop: '15px',
+      marginTop: '40px',
+      fontSize: '9pt',
+      color: '#6B7280',
+      textAlign: 'center' as const,
+    },
+  };
+
   return (
-    <div className="print-only" style={{ display: 'none' }}>
+    <div style={styles.page}>
       {/* Header */}
-      <div className="print-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={styles.header}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
-            <h1 style={{ margin: 0, fontSize: '24pt', color: '#002366' }}>Department Evaluation Report</h1>
-            <p style={{ margin: '4pt 0 0 0', fontSize: '11pt', color: '#6B7280' }}>{department} Department</p>
+            <h1 style={styles.title}>Department Evaluation Report</h1>
+            <p style={styles.subtitle}>{department} Department</p>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <p style={{ margin: 0, fontSize: '10pt', color: '#6B7280' }}>Report Date</p>
-            <p style={{ margin: '2pt 0 0 0', fontSize: '11pt', fontWeight: 'bold' }}>{new Date().toLocaleDateString()}</p>
+            <p style={{ margin: 0, fontSize: '10pt', color: '#6B7280' }}>Report Generated</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12pt', fontWeight: 'bold', color: '#002366' }}>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </div>
         </div>
       </div>

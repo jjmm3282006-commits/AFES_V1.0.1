@@ -26,6 +26,7 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
   const [pieChartView, setPieChartView] = useState<string>('overall');
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [disputeJustification, setDisputeJustification] = useState('');
+  const [isPrintMode, setIsPrintMode] = useState(false);
 
   const facultyId = user?.facultyId || 'F001';
   const faculty = store.getFacultyById(facultyId);
@@ -57,6 +58,14 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
     await store.submitDispute(facultyId, cycleId || '', disputeJustification);
     setShowDisputeModal(false);
     setDisputeJustification('');
+  };
+
+  const handlePrint = () => {
+    setIsPrintMode(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrintMode(false);
+    }, 100);
   };
 
   // Dynamic summary that updates automatically based on current data
@@ -119,13 +128,26 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
   const lowCriteria = criteria.filter(c => { const avg = metrics?.criteriaAverages[c.id] || 0; return avg < BENCHMARK && avg > 0; });
   const belowThreshold = !metrics || metrics.totalSubmissions < THRESHOLD;
 
+  // Render print view if in print mode
+  if (isPrintMode && metrics) {
+    return (
+      <FacultyPrintReport
+        facultyId={facultyId}
+        metrics={metrics}
+        criteria={criteria}
+        subQuestions={subQuestions}
+        cycleName={viewingCycle?.displayName || 'Current Cycle'}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h2 className="text-2xl font-bold" style={{ color: '#002366' }}>{faculty?.name}</h2><p className="text-sm" style={{ color: '#4B5563' }}>{faculty?.title} • {faculty?.department}</p>{viewingCycle && <p className="text-xs mt-1" style={{ color: '#B87333' }}>Viewing: {viewingCycle.displayName}</p>}</div>
         <div className="flex items-center gap-2">
           <button onClick={async () => await exportFacultyReport(facultyId, cycleId)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-white hover:opacity-90" style={{ backgroundColor: '#2E8B57' }}><Download size={14} />Export XLSX</button>
-          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium hover:opacity-90" style={{ backgroundColor: '#D5D8DC', color: '#1A1A1A' }}><Printer size={14} />Print</button>
+          <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium hover:opacity-90" style={{ backgroundColor: '#D5D8DC', color: '#1A1A1A' }}><Printer size={14} />Print</button>
           <button onClick={loadData} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#002366' }}><RefreshCw size={16} className={loading ? 'animate-spin' : ''} />Refresh</button>
         </div>
       </div>
@@ -238,17 +260,6 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
       {showSignModal && (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/50" onClick={() => setShowSignModal(false)} /><div className="relative w-full max-w-sm rounded-xl shadow-2xl p-6" style={{ backgroundColor: '#EDEBE8' }}><h3 className="text-lg font-semibold mb-2" style={{ color: '#002366' }}>Verify Identity</h3><p className="text-xs mb-4" style={{ color: '#4B5563' }}>Enter your password to acknowledge this report.</p><input type="password" value={signPassword} onChange={e => setSignPassword(e.target.value)} placeholder="Enter password" className="w-full px-3 py-2 rounded-lg border text-sm outline-none mb-2" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }} /><div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowSignModal(false)} className="px-3 py-1.5 rounded-lg text-sm border hover:bg-black/5" style={{ borderColor: '#D5D8DC' }}>Cancel</button><button onClick={handleSignOff} className="px-4 py-1.5 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#002366' }}>Confirm</button></div></div></div>)}
 
       {showDisputeModal && (<div className="fixed inset-0 z-[100] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/50" onClick={() => setShowDisputeModal(false)} /><div className="relative w-full max-w-md rounded-xl shadow-2xl p-6" style={{ backgroundColor: '#EDEBE8' }}><h3 className="text-lg font-semibold mb-2" style={{ color: '#C41E3A' }}>Request Review / Raise Dispute</h3><p className="text-xs mb-4" style={{ color: '#4B5563' }}>Please provide a detailed justification for your dispute. This will be reviewed by HR/Admin.</p><textarea value={disputeJustification} onChange={e => setDisputeJustification(e.target.value)} placeholder="Explain why you are disputing the evaluation results..." className="w-full px-3 py-2 rounded-lg border text-sm outline-none mb-4 resize-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }} rows={6} /><div className="flex justify-end gap-2"><button onClick={() => setShowDisputeModal(false)} className="px-3 py-1.5 rounded-lg text-sm border hover:bg-black/5" style={{ borderColor: '#D5D8DC' }}>Cancel</button><button onClick={handleSubmitDispute} disabled={!disputeJustification.trim()} className="px-4 py-1.5 rounded-lg text-sm font-medium text-white hover:opacity-90 disabled:opacity-50" style={{ backgroundColor: '#C41E3A' }}>Submit Dispute</button></div></div></div>)}
-      
-      {/* Print Report - Only visible when printing */}
-      {metrics && (
-        <FacultyPrintReport
-          facultyId={facultyId}
-          metrics={metrics}
-          criteria={criteria}
-          subQuestions={subQuestions}
-          cycleName={viewingCycle?.displayName || 'Current Cycle'}
-        />
-      )}
     </div>
   );
 }
