@@ -95,6 +95,7 @@ export default function Login() {
                 <option value="C24-018|pass123">Ava Williams (C24-018 / pass123)</option>
                 <option value="C24-021|pass123">Liam Johnson (C24-021 / pass123)</option>
                 <option value="C24-024|pass123">Charlotte Davis (C24-024 / pass123)</option>
+                <option value="C24-025|pass123">Ryan Martinez (C24-025 / pass123) ⚡ Resets on refresh</option>
               </optgroup>
               <optgroup label="Students - BS Mathematics">
                 <option value="C24-007|pass123">Grace Taylor (C24-007 / pass123)</option>

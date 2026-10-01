@@ -96,6 +96,7 @@ const STUDENTS_SEED: Student[] = [
   { id: 'C24-022', name: 'Mia Thompson', programId: 'BSMATH', enrolledSubjects: ['MATH101', 'MATH150', 'MATH201'] },
   { id: 'C24-023', name: 'James Wilson', programId: 'BSPHYS', enrolledSubjects: ['PHYS201', 'PHYS301', 'MATH301'] },
   { id: 'C24-024', name: 'Charlotte Davis', programId: 'BSCS', enrolledSubjects: ['CS250', 'CS301', 'CS350'] },
+  { id: 'C24-025', name: 'Ryan Martinez', programId: 'BSCS', enrolledSubjects: ['CS101', 'CS201', 'CS301'] },
 ];
 
 const DEANS_SEED: Dean[] = [
@@ -408,6 +409,10 @@ class DataStore {
           faculty.acknowledgedBy = undefined;
         }
       });
+
+      // Demo: Reset student C24-025's evaluation session on refresh
+      // This allows the student to re-evaluate subjects on each refresh
+      this.studentSessionEvals.delete('C24-025');
     } else {
       this.addAuditLog('system', 'system_init', 'DataStore', `System initialized — Faculty: ${FACULTY_SEED.length}, Students: ${STUDENTS_SEED.length}, Deans: ${DEANS_SEED.length}, Cycles: ${CYCLES_SEED.length}, Criteria: ${CRITERIA_SEED.length}, Sub-Questions: ${SUB_QUESTIONS.length}, Seed Evaluations: ${this.evaluations.length}`);
     }
