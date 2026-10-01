@@ -24,6 +24,10 @@ export default function FacultyPrintReport({ facultyId, metrics, criteria, subQu
     })),
   }));
 
+  // Generate tracking ID and metadata
+  const trackingId = `AFES-${Date.now()}-${facultyId}`;
+  const generationTimestamp = new Date().toLocaleString();
+
   const styles = {
     page: { fontFamily: 'Georgia, serif', color: '#1A1A1A', lineHeight: 1.6, padding: '0', maxWidth: '8.5in', margin: '0 auto', backgroundColor: 'white' },
     header: { borderBottom: '3px solid #002366', paddingBottom: '20px', marginBottom: '30px' },
@@ -56,6 +60,39 @@ export default function FacultyPrintReport({ facultyId, metrics, criteria, subQu
         </div>
       </div>
 
+      {/* Metadata Section */}
+      <div style={{ ...styles.section, backgroundColor: '#F8F6F1', padding: '15px', border: '1px solid #D5D8DC', borderRadius: '4px' }}>
+        <h3 style={{ fontSize: '12pt', fontWeight: 'bold', color: '#002366', margin: '0 0 10px 0' }}>Report Metadata</h3>
+        <table style={{ width: '100%', fontSize: '10pt' }}>
+          <tbody>
+            <tr>
+              <td style={{ padding: '4px 0', fontWeight: 'bold', width: '30%' }}>Tracking ID:</td>
+              <td style={{ padding: '4px 0' }}>{trackingId}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '4px 0', fontWeight: 'bold' }}>Generated:</td>
+              <td style={{ padding: '4px 0' }}>{generationTimestamp}</td>
+            </tr>
+            <tr>
+              <td style={{ padding: '4px 0', fontWeight: 'bold' }}>Status:</td>
+              <td style={{ padding: '4px 0' }}>
+                <span style={{ 
+                  display: 'inline-block', 
+                  padding: '2px 8px', 
+                  borderRadius: '3px', 
+                  fontSize: '9pt', 
+                  fontWeight: 'bold',
+                  backgroundColor: faculty.acknowledgmentStatus === 'acknowledged' ? '#D1FAE5' : '#F5E6D3',
+                  color: faculty.acknowledgmentStatus === 'acknowledged' ? '#2E8B57' : '#B87333'
+                }}>
+                  {faculty.acknowledgmentStatus === 'acknowledged' ? '✓ Faculty Signed & Acknowledged' : '○ Pending Acknowledgment'}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>Faculty Information</h2>
         <table style={styles.table}>
@@ -68,6 +105,24 @@ export default function FacultyPrintReport({ facultyId, metrics, criteria, subQu
           </tbody>
         </table>
       </div>
+
+      {/* Signature Section */}
+      {faculty.acknowledgmentStatus === 'acknowledged' && faculty.signature && (
+        <div style={styles.section}>
+          <h2 style={styles.sectionTitle}>Faculty E-Signature</h2>
+          <div style={{ padding: '20px', backgroundColor: '#F8F6F1', border: '2px solid #D5D8DC', borderRadius: '4px', textAlign: 'center' }}>
+            <img 
+              src={faculty.signature} 
+              alt="Faculty Signature" 
+              style={{ maxWidth: '300px', maxHeight: '100px', border: '1px solid #D5D8DC', backgroundColor: 'white' }}
+            />
+            <div style={{ marginTop: '15px', fontSize: '10pt', color: '#6B7280' }}>
+              <p style={{ margin: '4px 0' }}><strong>Signed:</strong> {new Date(faculty.acknowledgedAt || '').toLocaleString()}</p>
+              <p style={{ margin: '4px 0' }}><strong>Verified by:</strong> {faculty.acknowledgedBy || 'Self'}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>Performance Summary</h2>
@@ -108,8 +163,15 @@ export default function FacultyPrintReport({ facultyId, metrics, criteria, subQu
 
       <div style={styles.footer}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ textAlign: 'left' }}><p style={{ margin: 0, fontWeight: 'bold' }}>Anonymous Faculty Evaluation System (AFES)</p><p style={{ margin: '4px 0 0 0', fontSize: '9pt' }}>This report contains confidential evaluation data. Handle with appropriate care.</p></div>
-          <div style={{ textAlign: 'right' }}><p style={{ margin: 0, fontWeight: 'bold' }}>Page 1 of 1</p><p style={{ margin: '4px 0 0 0', fontSize: '9pt' }}>Generated: {new Date().toLocaleString()}</p></div>
+          <div style={{ textAlign: 'left' }}>
+            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '10pt' }}>Anonymous Faculty Evaluation System (AFES)</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '9pt' }}>This report contains confidential evaluation data. Handle with appropriate care.</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '8pt', fontStyle: 'italic' }}>Tracking ID: {trackingId}</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ margin: 0, fontWeight: 'bold', fontSize: '10pt' }}>Official Document</p>
+            <p style={{ margin: '4px 0 0 0', fontSize: '9pt' }}>Generated: {generationTimestamp}</p>
+          </div>
         </div>
       </div>
     </div>

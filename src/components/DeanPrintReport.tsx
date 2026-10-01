@@ -26,6 +26,10 @@ export default function DeanPrintReport({ department, cycleName, criteria }: Dea
   const strengths = critData.filter(c => c.avg >= 4.0).sort((a, b) => b.avg - a.avg);
   const improvements = critData.filter(c => c.avg < BENCHMARK && c.avg > 0).sort((a, b) => a.avg - b.avg);
 
+  // Generate tracking ID and metadata
+  const trackingId = `AFES-DEAN-${Date.now()}-${department.replace(/\s+/g, '-')}`;
+  const generationTimestamp = new Date().toLocaleString();
+
   const styles = {
     page: { fontFamily: 'Georgia, serif', color: '#1A1A1A', lineHeight: 1.6, padding: '0', maxWidth: '8.5in', margin: '0 auto', backgroundColor: 'white' },
     header: { borderBottom: '3px solid #002366', paddingBottom: '20px', marginBottom: '30px' },
