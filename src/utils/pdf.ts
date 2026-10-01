@@ -165,20 +165,33 @@ export async function exportFacultyPDF(facultyId: string, cycleId?: string): Pro
         const sqAvg = metrics.subQuestionAverages[sq.id] || 0;
         const sqRating = sqAvg >= 4.5 ? 'Excellent' : sqAvg >= BENCHMARK ? 'Good' : sqAvg >= 2 ? 'Needs Improvement' : 'Critical';
         
+        // Check if we need a new page
+        if (yPos > 270) {
+          doc.addPage();
+          yPos = margin;
+        }
+        
         doc.setFontSize(9);
-        doc.text(`  → ${sq.text}`, margin + 10, yPos + 4, { maxWidth: 90 });
-        doc.text(sqAvg.toFixed(2), margin + 100, yPos + 4);
+        // Split long text into multiple lines if needed
+        const sqTextLines = doc.splitTextToSize(`  → ${sq.text}`, 85);
+        const lineHeight = 4;
+        sqTextLines.forEach((line: string, lineIdx: number) => {
+          doc.text(line, margin + 10, yPos + 4 + (lineIdx * lineHeight));
+        });
+        
+        const textHeight = sqTextLines.length * lineHeight;
+        doc.text(sqAvg.toFixed(2), margin + 100, yPos + 4 + (textHeight - lineHeight) / 2);
         
         if (sqAvg >= BENCHMARK) {
           doc.setTextColor(46, 139, 87);
         } else {
           doc.setTextColor(196, 30, 58);
         }
-        doc.text(sqRating, margin + 130, yPos + 4);
+        doc.text(sqRating, margin + 130, yPos + 4 + (textHeight - lineHeight) / 2);
         doc.setTextColor(0, 0, 0);
         doc.setFontSize(10);
         
-        yPos += 6;
+        yPos += Math.max(6, textHeight + 2);
       });
     });
 
@@ -300,26 +313,40 @@ export async function exportFacultyPDF(facultyId: string, cycleId?: string): Pro
     doc.setFontSize(10);
 
     metrics.feedback.slice(0, 10).forEach((fb, i) => {
-      if (yPos > 260) {
+      // Calculate height needed for this feedback item
+      doc.setFontSize(9);
+      const feedbackLines = doc.splitTextToSize(`"${fb.feedback}"`, pageWidth - 2 * margin - 10);
+      const feedbackHeight = feedbackLines.length * 4 + 12; // 4px per line + 12px for metadata
+      
+      // Check if we need a new page
+      if (yPos + feedbackHeight > 270) {
         doc.addPage();
         yPos = margin;
       }
 
+      // Draw background box
       doc.setFillColor(248, 246, 241);
       doc.setDrawColor(184, 115, 51);
       doc.setLineWidth(0.5);
-      doc.line(margin, yPos, margin, yPos + 15);
-      doc.rect(margin + 2, yPos, pageWidth - 2 * margin - 4, 15, 'F');
+      doc.line(margin, yPos, margin, yPos + feedbackHeight);
+      doc.rect(margin + 2, yPos, pageWidth - 2 * margin - 4, feedbackHeight, 'F');
       
+      // Draw feedback text (may be multiple lines)
       doc.setFontSize(9);
-      doc.text(`"${fb.feedback}"`, margin + 5, yPos + 5, { maxWidth: pageWidth - 2 * margin - 10 });
+      doc.setTextColor(0, 0, 0);
+      feedbackLines.forEach((line: string, lineIdx: number) => {
+        doc.text(line, margin + 5, yPos + 5 + (lineIdx * 4));
+      });
+      
+      // Draw metadata
+      const metadataY = yPos + 5 + (feedbackLines.length * 4) + 2;
       doc.setFontSize(8);
       doc.setTextColor(100, 100, 100);
-      doc.text(`Course: ${fb.courseId} • ${new Date(fb.submittedAt).toLocaleDateString()}`, margin + 5, yPos + 12);
+      doc.text(`Course: ${fb.courseId} • ${new Date(fb.submittedAt).toLocaleDateString()}`, margin + 5, metadataY);
       doc.setTextColor(0, 0, 0);
       doc.setFontSize(10);
       
-      yPos += 18;
+      yPos += feedbackHeight + 3; // Add spacing between items
     });
 
     // Footer

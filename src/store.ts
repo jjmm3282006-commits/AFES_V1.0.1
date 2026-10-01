@@ -444,6 +444,15 @@ class DataStore {
     this.emit('cycle_changed');
   }
 
+  async unarchiveCycle(cycleId: string): Promise<void> {
+    await this.simulateLatency();
+    const cycle = this.cycles.find(c => c.id === cycleId);
+    if (cycle) cycle.status = 'completed';
+    this.addAuditLog('admin', 'cycle_unarchived', cycleId, `Unarchived "${cycle?.displayName}" to completed status`);
+    this.persistData();
+    this.emit('cycle_changed');
+  }
+
   async removeCycle(cycleId: string): Promise<void> {
     await this.simulateLatency();
     const cycle = this.cycles.find(c => c.id === cycleId);
