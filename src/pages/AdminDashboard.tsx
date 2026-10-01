@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { store, BENCHMARK, THRESHOLD } from '../store';
 import { exportFacultyReport } from '../utils/excel';
+import { exportFacultyPDF } from '../utils/pdf';
 import ConfirmDialog from '../components/ConfirmDialog';
 import type { Faculty, EvaluationCycle, Criterion, AuditLogEntry, SubQuestion, TrainingRecommendation, Dispute } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
 import { LayoutDashboard, Users, Calendar, ListChecks, ScrollText, Plus, Trash2, Search, AlertTriangle, CheckCircle, TrendingUp, Shield, FileSpreadsheet, GraduationCap, Edit3, Sparkles, Download, BarChart3, MessageSquare, BookOpen, Printer, UserPlus } from 'lucide-react';
 import AdminPrintReport from '../components/AdminPrintReport';
+import FacultyPrintReport from '../components/FacultyPrintReport';
 
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
 
@@ -233,6 +235,28 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
         const metrics = store.getFacultyMetrics(selectedFaculty.id, cycleId);
         const criteriaBarData = criteria.map(c => ({ name: c.name, score: metrics.criteriaAverages[c.id] || 0 }));
         const belowThreshold = metrics.totalSubmissions < THRESHOLD;
+        const subQuestions = store.getSubQuestions();
+        
+        const handlePrint = () => {
+          setIsPrintMode(true);
+          setTimeout(() => {
+            window.print();
+            setIsPrintMode(false);
+          }, 100);
+        };
+        
+        // Render print view if in print mode
+        if (isPrintMode && metrics) {
+          return (
+            <FacultyPrintReport
+              facultyId={selectedFaculty.id}
+              metrics={metrics}
+              criteria={criteria}
+              subQuestions={subQuestions}
+              cycleName={activeCycle?.displayName || 'Current Cycle'}
+            />
+          );
+        }
         
         return (
           <div className="space-y-6">
@@ -244,9 +268,17 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
                   <p className="text-sm" style={{ color: '#4B5563' }}>{selectedFaculty.title} • {selectedFaculty.department}</p>
                 </div>
               </div>
-              <button onClick={() => exportFacultyReport(selectedFaculty.id, cycleId)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#2E8B57' }}>
-                <Download size={16} /> Export XLSX
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={async () => await exportFacultyReport(selectedFaculty.id, cycleId)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#2E8B57' }}>
+                  <Download size={16} /> Export XLSX
+                </button>
+                <button onClick={async () => await exportFacultyPDF(selectedFaculty.id, cycleId)} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90" style={{ backgroundColor: '#B87333' }}>
+                  <Download size={16} /> Export PDF
+                </button>
+                <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90" style={{ backgroundColor: '#D5D8DC', color: '#1A1A1A' }}>
+                  <Printer size={16} /> Print
+                </button>
+              </div>
             </div>
 
             {belowThreshold ? (
@@ -273,22 +305,91 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
                   </div>
                 </div>
 
+                {/* E-Signature Display */}
+                {selectedFaculty.acknowledgmentStatus === 'acknowledged' && selectedFaculty.signature && (
+                  <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+                    <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>E-Signature</h3>
+                    <div className="flex items-center gap-4 p-4 rounded-lg" style={{ backgroundColor: '#F8F6F1', border: '1px solid #D5D8DC' }}>
+                      <img 
+                        src={selectedFaculty.signature} 
+                        alt="Faculty Signature" 
+                        className="border rounded"
+                        style={{ maxHeight: '80px', borderColor: '#D5D8DC' }}
+                      />
+                      <div className="text-xs" style={{ color: '#4B5563' }}>
+                        <p className="font-semibold" style={{ color: '#002366' }}>Signed</p>
+                        <p>{selectedFaculty.acknowledgedAt ? new Date(selectedFaculty.acknowledgedAt).toLocaleString() : 'N/A'}</p>
+                        <p className="mt-2">Verified by: {selectedFaculty.acknowledgedBy || 'Self'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Criteria Performance with Sub-Questions */}
                 <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
                   <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Criteria Performance</h3>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <BarChart data={criteriaBarData} layout="vertical" margin={{ left: 20 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#D5D8DC" />
-                      <XAxis type="number" domain={[0, 5]} tick={{ fontSize: 11 }} />
-                      <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={100} />
-                      <Tooltip />
-                      <ReferenceLine x={BENCHMARK} stroke="#C41E3A" strokeDasharray="5 5" />
-                      <Bar dataKey="score" radius={[0, 4, 4, 0]}>
-                        {criteriaBarData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.score >= BENCHMARK ? '#2E8B57' : '#C41E3A'} />
+                  <div className="space-y-3">
+                    {criteria.map((crit, i) => {
+                      const critAvg = metrics.criteriaAverages[crit.id] || 0;
+                      const critSubQuestions = subQuestions.filter(sq => sq.criterionId === crit.id);
+                      return (
+                        <div key={i} className="rounded-lg overflow-hidden" style={{ backgroundColor: '#F8F6F1' }}>
+                          <div className="flex items-center justify-between p-3" style={{ backgroundColor: '#F5E6D3' }}>
+                            <span className="text-sm font-semibold" style={{ color: '#002366' }}>{crit.name}</span>
+                            <span className="text-sm font-bold" style={{ 
+                              color: critAvg >= 4.5 ? '#2E8B57' : critAvg >= BENCHMARK ? '#002366' : '#C41E3A' 
+                            }}>
+                              {critAvg.toFixed(2)} / 5.0
+                            </span>
+                          </div>
+                          <div className="p-3 space-y-1">
+                            {critSubQuestions.map((sq, j) => {
+                              const sqAvg = metrics.subQuestionAverages[sq.id] || 0;
+                              return (
+                                <div key={j} className="flex items-center justify-between pl-4 py-1 text-xs">
+                                  <span className="flex-1" style={{ color: '#4B5563' }}>→ {sq.text}</span>
+                                  <span className="font-semibold ml-2" style={{ 
+                                    color: sqAvg >= 4.5 ? '#2E8B57' : sqAvg >= BENCHMARK ? '#002366' : '#C41E3A' 
+                                  }}>
+                                    {sqAvg.toFixed(2)}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Course Performance */}
+                <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
+                  <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Course Performance</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr style={{ backgroundColor: '#002366' }}>
+                          <th className="text-left px-4 py-2 text-white font-medium">Course</th>
+                          <th className="text-center px-4 py-2 text-white font-medium">Submissions</th>
+                          <th className="text-center px-4 py-2 text-white font-medium">Average</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(metrics.courseBreakdown).map(([course, data], i) => (
+                          <tr key={course} style={{ backgroundColor: i % 2 === 0 ? '#EDEBE8' : '#F8F6F1' }}>
+                            <td className="px-4 py-2 font-medium" style={{ color: '#1A1A1A' }}>{course}</td>
+                            <td className="px-4 py-2 text-center">{data.count}</td>
+                            <td className="px-4 py-2 text-center font-bold" style={{ 
+                              color: data.average >= 4.5 ? '#2E8B57' : data.average >= BENCHMARK ? '#002366' : '#C41E3A' 
+                            }}>
+                              {data.average.toFixed(2)}
+                            </td>
+                          </tr>
                         ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
