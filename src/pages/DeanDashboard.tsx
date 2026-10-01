@@ -336,6 +336,7 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
         
         const metrics = store.getFacultyMetrics(selectedFacultyId, cycleId);
         const critData = criteria.map(c => ({
+          id: c.id,
           name: c.name,
           avg: metrics.criteriaAverages[c.id] || 0,
         }));
@@ -396,20 +397,40 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
               </div>
             )}
 
-            {/* Criteria Performance */}
+            {/* Criteria Performance with Sub-Questions */}
             <div className="mb-4">
               <h4 className="text-sm font-semibold mb-2" style={{ color: '#002366' }}>Criteria Performance</h4>
-              <div className="space-y-2">
-                {critData.map((crit, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-lg" style={{ backgroundColor: '#EDEBE8' }}>
-                    <span className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{crit.name}</span>
-                    <span className="text-sm font-bold" style={{ 
-                      color: crit.avg >= 4.5 ? '#2E8B57' : crit.avg >= BENCHMARK ? '#002366' : '#C41E3A' 
-                    }}>
-                      {crit.avg.toFixed(2)} / 5.0
-                    </span>
-                  </div>
-                ))}
+              <div className="space-y-3">
+                {critData.map((crit, i) => {
+                  const subQuestions = store.getSubQuestionsForCriterion(crit.id);
+                  return (
+                    <div key={i} className="rounded-lg overflow-hidden" style={{ backgroundColor: '#EDEBE8' }}>
+                      <div className="flex items-center justify-between p-2" style={{ backgroundColor: '#F5E6D3' }}>
+                        <span className="text-sm font-semibold" style={{ color: '#002366' }}>{crit.name}</span>
+                        <span className="text-sm font-bold" style={{ 
+                          color: crit.avg >= 4.5 ? '#2E8B57' : crit.avg >= BENCHMARK ? '#002366' : '#C41E3A' 
+                        }}>
+                          {crit.avg.toFixed(2)} / 5.0
+                        </span>
+                      </div>
+                      <div className="p-2 space-y-1">
+                        {subQuestions.map((sq, j) => {
+                          const sqAvg = metrics.subQuestionAverages[sq.id] || 0;
+                          return (
+                            <div key={j} className="flex items-center justify-between pl-4 py-1 text-xs">
+                              <span className="flex-1" style={{ color: '#4B5563' }}>→ {sq.text}</span>
+                              <span className="font-semibold ml-2" style={{ 
+                                color: sqAvg >= 4.5 ? '#2E8B57' : sqAvg >= BENCHMARK ? '#002366' : '#C41E3A' 
+                              }}>
+                                {sqAvg.toFixed(2)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
