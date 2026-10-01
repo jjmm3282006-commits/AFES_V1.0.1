@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { store } from '../store';
 import { useAuth } from '../auth';
 import { stripPII, detectPII } from '../utils/pii';
-import type { EvaluationCycle, Criterion, SubQuestion } from '../types';
-import { CheckCircle, AlertTriangle, Send, Shield, Eye, BookOpen, User, Clock } from 'lucide-react';
+import type { EvaluationCycle, Criterion, SubQuestion, Program, Subject } from '../types';
+import { CheckCircle, AlertTriangle, Send, Shield, Eye, BookOpen, User, Clock, GraduationCap } from 'lucide-react';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -11,10 +11,15 @@ export default function StudentDashboard() {
   const [cycles, setCycles] = useState<EvaluationCycle[]>([]);
   const [criteria, setCriteria] = useState<Criterion[]>([]);
   const [subQuestions, setSubQuestions] = useState<SubQuestion[]>([]);
-  const [availableCourses, setAvailableCourses] = useState<Array<{ courseId: string; facultyId: string; facultyName: string }>>([]);
-  const [selectedCourse, setSelectedCourse] = useState('');
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [availableSubjects, setAvailableSubjects] = useState<Subject[]>([]);
+  
+  // Hierarchical selection state
+  const [selectedProgram, setSelectedProgram] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState('');
   const [boundFacultyId, setBoundFacultyId] = useState('');
   const [boundFacultyName, setBoundFacultyName] = useState('');
+  
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [feedback, setFeedback] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -28,7 +33,8 @@ export default function StudentDashboard() {
     setCycles(store.getCycles());
     setCriteria(store.getCriteria());
     setSubQuestions(store.getSubQuestions());
-    setAvailableCourses(store.getAvailableCoursesForStudent(studentId));
+    setPrograms(store.getPrograms());
+    setAvailableSubjects(store.getAvailableSubjectsForStudent(studentId));
   }, [studentId]);
 
   useEffect(() => {
@@ -39,10 +45,26 @@ export default function StudentDashboard() {
 
   useEffect(() => { const detected = detectPII(feedback); setPiiDetected(detected); }, [feedback]);
 
-  const handleCourseSelect = (courseId: string) => {
-    setSelectedCourse(courseId);
-    const course = availableCourses.find(c => c.courseId === courseId);
-    if (course) { setBoundFacultyId(course.facultyId); setBoundFacultyName(course.facultyName); }
+  // Filter subjects by selected program
+  const subjectsForProgram = selectedProgram 
+    ? availableSubjects.filter(s => s.programId === selectedProgram)
+    : [];
+
+  const handleProgramSelect = (programId: string) => {
+    setSelectedProgram(programId);
+    setSelectedSubject('');
+    setBoundFacultyId('');
+    setBoundFacultyName('');
+    setRatings({});
+  };
+
+  const handleSubjectSelect = (subjectId: string) => {
+    setSelectedSubject(subjectId);
+    const faculty = store.getFacultyBySubject(subjectId);
+    if (faculty) {
+      setBoundFacultyId(faculty.id);
+      setBoundFacultyName(faculty.name);
+    }
     setRatings({});
   };
 
@@ -63,14 +85,14 @@ export default function StudentDashboard() {
   const allRated = subQuestions.every(sq => ratings[sq.id] !== undefined);
 
   const handleSubmit = async () => {
-    if (!selectedCourse || !boundFacultyId || !allRated || !activeCycle) return;
+    if (!selectedSubject || !boundFacultyId || !allRated || !activeCycle) return;
     setSubmitting(true); setSubmitResult(null);
     try {
       const strippedFeedback = stripPII(feedback);
-      await store.submitEvaluation({ facultyId: boundFacultyId, courseId: selectedCourse, cycleId: activeCycle.id, ratings, feedback: strippedFeedback }, studentId);
+      await store.submitEvaluation({ facultyId: boundFacultyId, courseId: selectedSubject, cycleId: activeCycle.id, ratings, feedback: strippedFeedback }, studentId);
       setSubmitResult('success');
-      setSelectedCourse(''); setBoundFacultyId(''); setBoundFacultyName(''); setRatings({}); setFeedback('');
-      setAvailableCourses(store.getAvailableCoursesForStudent(studentId));
+      setSelectedProgram(''); setSelectedSubject(''); setBoundFacultyId(''); setBoundFacultyName(''); setRatings({}); setFeedback('');
+      setAvailableSubjects(store.getAvailableSubjectsForStudent(studentId));
     } catch { setSubmitResult('error'); }
     finally { setSubmitting(false); }
   };
@@ -89,21 +111,38 @@ export default function StudentDashboard() {
       {submitResult === 'error' && (<div className="rounded-xl p-4 flex items-center gap-3" style={{ backgroundColor: '#FEE2E2', border: '1px solid #C41E3A' }}><AlertTriangle size={20} style={{ color: '#C41E3A' }} /><p className="text-sm font-medium" style={{ color: '#C41E3A' }}>Submission failed. Please try again.</p></div>)}
       <div className="rounded-xl shadow-md p-6" style={{ backgroundColor: '#EDEBE8' }}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2" style={{ color: '#002366' }}><Shield size={22} style={{ color: '#B87333' }} />Submit Evaluation</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        
+        {/* Hierarchical Selection: Program → Subject → Professor */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Step 1: Select Program */}
           <div>
-            <label className="block text-sm font-medium mb-1"><BookOpen size={14} className="inline mr-1" style={{ color: '#B87333' }} />Select Your Course</label>
-            <select value={selectedCourse} onChange={e => handleCourseSelect(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border outline-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }}>
-              <option value="">-- Choose a course to evaluate --</option>
-              {availableCourses.map(c => (<option key={c.courseId} value={c.courseId}>{c.courseId}</option>))}
+            <label className="block text-sm font-medium mb-1"><GraduationCap size={14} className="inline mr-1" style={{ color: '#B87333' }} />1. Select Program</label>
+            <select value={selectedProgram} onChange={e => handleProgramSelect(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border outline-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }}>
+              <option value="">-- Choose your program --</option>
+              {programs.map(p => (<option key={p.id} value={p.id}>{p.name}</option>))}
             </select>
-            {availableCourses.length === 0 && <p className="text-xs mt-1" style={{ color: '#2E8B57' }}>✓ All enrolled courses have been evaluated this session!</p>}
           </div>
+          
+          {/* Step 2: Select Subject (filtered by program) */}
           <div>
-            <label className="block text-sm font-medium mb-1"><User size={14} className="inline mr-1" style={{ color: '#B87333' }} />Assigned Instructor</label>
-            <input type="text" value={boundFacultyName} disabled className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none" style={{ backgroundColor: '#D5D8DC', borderColor: '#D5D8DC', color: boundFacultyName ? '#1A1A1A' : '#9CA3AF' }} placeholder="Select a course first..." />
+            <label className="block text-sm font-medium mb-1"><BookOpen size={14} className="inline mr-1" style={{ color: '#B87333' }} />2. Select Subject</label>
+            <select value={selectedSubject} onChange={e => handleSubjectSelect(e.target.value)} className="w-full px-3 py-2.5 rounded-lg border outline-none" style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }} disabled={!selectedProgram}>
+              <option value="">-- Choose a subject --</option>
+              {subjectsForProgram.map(s => (<option key={s.id} value={s.id}>{s.code} - {s.name}</option>))}
+            </select>
+            {!selectedProgram && <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Select a program first</p>}
+            {selectedProgram && subjectsForProgram.length === 0 && <p className="text-xs mt-1" style={{ color: '#2E8B57' }}>✓ All subjects evaluated!</p>}
+          </div>
+          
+          {/* Step 3: Professor (auto-populated and locked) */}
+          <div>
+            <label className="block text-sm font-medium mb-1"><User size={14} className="inline mr-1" style={{ color: '#B87333' }} />3. Assigned Professor</label>
+            <input type="text" value={boundFacultyName} disabled className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none" style={{ backgroundColor: '#D5D8DC', borderColor: '#D5D8DC', color: boundFacultyName ? '#1A1A1A' : '#9CA3AF' }} placeholder="Select a subject first..." />
+            {boundFacultyName && <p className="text-xs mt-1" style={{ color: '#2E8B57' }}>✓ Professor locked</p>}
           </div>
         </div>
-        {selectedCourse && (
+        
+        {selectedSubject && boundFacultyId && (
           <>
             <div className="mb-4 flex items-center gap-1 text-sm" style={{ color: '#1A1A1A' }}><Eye size={14} style={{ color: '#B87333' }} />Rate each question on a scale of 1-5 (1 = Poor, 5 = Excellent)</div>
             <div className="space-y-4 mb-6">

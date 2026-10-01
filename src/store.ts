@@ -308,6 +308,8 @@ class DataStore {
   private cycles: EvaluationCycle[] = JSON.parse(JSON.stringify(CYCLES_SEED));
   private criteria: Criterion[] = [...CRITERIA_SEED];
   private subQuestions: SubQuestion[] = [...SUB_QUESTIONS];
+  private programs: Program[] = [...PROGRAMS_SEED];
+  private subjects: Subject[] = [...SUBJECTS_SEED];
   private evaluations: Evaluation[] = generateSeedEvaluations();
   private auditLog: AuditLogEntry[] = [];
   private rateLimits: Map<string, RateLimitEntry> = new Map();
@@ -662,6 +664,39 @@ class DataStore {
     return this.evaluations.filter(e => facultyIds.includes(e.facultyId) && (!cycleId || e.cycleId === cycleId));
   }
 
+  // Programs and Subjects methods
+  getPrograms(): Program[] {
+    return [...this.programs];
+  }
+
+  getSubjectsByProgram(programId: string): Subject[] {
+    return this.subjects.filter(s => s.programId === programId);
+  }
+
+  getSubjectById(subjectId: string): Subject | undefined {
+    return this.subjects.find(s => s.id === subjectId);
+  }
+
+  getFacultyBySubject(subjectId: string): Faculty | undefined {
+    const subject = this.getSubjectById(subjectId);
+    if (!subject) return undefined;
+    return this.faculty.find(f => f.id === subject.facultyId);
+  }
+
+  isSubjectEvaluatedByStudent(studentId: string, subjectId: string): boolean {
+    return this.studentSessionEvals.get(studentId)?.has(subjectId) || false;
+  }
+
+  getAvailableSubjectsForStudent(studentId: string): Subject[] {
+    const student = this.students.find(s => s.id === studentId);
+    if (!student) return [];
+    return student.enrolledSubjects
+      .filter(subjectId => !this.isSubjectEvaluatedByStudent(studentId, subjectId))
+      .map(subjectId => this.getSubjectById(subjectId))
+      .filter((s): s is Subject => s !== undefined);
+  }
+
+  // Legacy method for backward compatibility
   isCourseEvaluatedByStudent(studentId: string, courseId: string): boolean {
     return this.studentSessionEvals.get(studentId)?.has(courseId) || false;
   }
@@ -669,9 +704,10 @@ class DataStore {
   getAvailableCoursesForStudent(studentId: string): Array<{ courseId: string; facultyId: string; facultyName: string }> {
     const student = this.students.find(s => s.id === studentId);
     if (!student) return [];
-    return student.enrolledCourses.filter(courseId => !this.isCourseEvaluatedByStudent(studentId, courseId)).map(courseId => {
-      const fac = this.faculty.find(f => f.courses.includes(courseId));
-      return { courseId, facultyId: fac?.id || '', facultyName: fac?.name || 'Unknown' };
+    return student.enrolledSubjects.filter(subjectId => !this.isSubjectEvaluatedByStudent(studentId, subjectId)).map(subjectId => {
+      const subject = this.getSubjectById(subjectId);
+      const fac = subject ? this.faculty.find(f => f.id === subject.facultyId) : undefined;
+      return { courseId: subjectId, facultyId: fac?.id || '', facultyName: fac?.name || 'Unknown' };
     });
   }
 
