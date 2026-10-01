@@ -12,9 +12,12 @@ import SignaturePad from '../components/SignaturePad';
 const COLORS = ['#002366', '#B87333', '#C41E3A', '#2E8B57', '#6366F1'];
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
 
-interface FacultyDashboardProps { viewingCycleId?: string; }
+interface FacultyDashboardProps { 
+  viewingCycleId?: string;
+  onViewingCycleChange?: (cycleId: string) => void;
+}
 
-export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardProps) {
+export default function FacultyDashboard({ viewingCycleId, onViewingCycleChange }: FacultyDashboardProps) {
   const { user } = useAuth();
   const [metrics, setMetrics] = useState<FacultyMetrics | null>(null);
   const [criteria, setCriteria] = useState<Criterion[]>([]);

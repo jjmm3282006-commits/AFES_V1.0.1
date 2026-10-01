@@ -5,7 +5,12 @@ import { stripPII, detectPII } from '../utils/pii';
 import type { EvaluationCycle, Criterion, SubQuestion, Program, Subject } from '../types';
 import { CheckCircle, AlertTriangle, Send, Shield, Eye, BookOpen, User, Clock, GraduationCap } from 'lucide-react';
 
-export default function StudentDashboard() {
+interface StudentDashboardProps {
+  viewingCycleId?: string;
+  onViewingCycleChange?: (cycleId: string) => void;
+}
+
+export default function StudentDashboard({ viewingCycleId, onViewingCycleChange }: StudentDashboardProps) {
   const { user } = useAuth();
   const studentId = user?.id || '';
   const [cycles, setCycles] = useState<EvaluationCycle[]>([]);

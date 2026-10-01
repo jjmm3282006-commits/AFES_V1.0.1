@@ -13,9 +13,12 @@ import FacultyPrintReport from '../components/FacultyPrintReport';
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
 
 type Tab = 'overview' | 'faculty' | 'cycles' | 'criteria' | 'tna' | 'disputes' | 'audit';
-interface AdminDashboardProps { viewingCycleId?: string; }
+interface AdminDashboardProps { 
+  viewingCycleId?: string;
+  onViewingCycleChange?: (cycleId: string) => void;
+}
 
-export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) {
+export default function AdminDashboard({ viewingCycleId, onViewingCycleChange }: AdminDashboardProps) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>('overview');
   const [faculty, setFaculty] = useState<Faculty[]>([]);

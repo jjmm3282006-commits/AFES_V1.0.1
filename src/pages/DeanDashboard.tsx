@@ -9,9 +9,12 @@ import DeanPrintReport from '../components/DeanPrintReport';
 
 const COLORS = ['#002366', '#B87333', '#C41E3A', '#2E8B57', '#6366F1'];
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
-interface DeanDashboardProps { viewingCycleId?: string; }
+interface DeanDashboardProps { 
+  viewingCycleId?: string;
+  onViewingCycleChange?: (cycleId: string) => void;
+}
 
-export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
+export default function DeanDashboard({ viewingCycleId, onViewingCycleChange }: DeanDashboardProps) {
   const { user } = useAuth();
   const department = user?.department || '';
   const [criteria, setCriteria] = useState<Criterion[]>([]);
