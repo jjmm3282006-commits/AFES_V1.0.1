@@ -31,7 +31,20 @@ export async function exportFacultyReport(facultyId: string, cycleId?: string): 
     coverSheet.getRow(1).font = { bold: true, size: 16, color: { argb: 'FF002366' } };
     coverSheet.getRow(2).values = ['Professional Development Portfolio', ''];
     coverSheet.getRow(2).font = { bold: true, size: 12, color: { argb: 'FFB87333' } };
-    coverSheet.getRow(4).values = ['Faculty Information', ''];
+    
+    // Generate tracking ID and timestamp
+    const trackingId = `AFES-${Date.now()}-${facultyId}`;
+    const generationTimestamp = new Date().toLocaleString();
+    
+    // Metadata Section
+    coverSheet.getRow(4).values = ['Report Metadata', ''];
+    coverSheet.getRow(4).font = { bold: true, size: 11, color: { argb: 'FF002366' } };
+    coverSheet.getRow(5).values = ['Tracking ID', trackingId];
+    coverSheet.getRow(6).values = ['Generated', generationTimestamp];
+    coverSheet.getRow(7).values = ['Status', faculty.acknowledgmentStatus === 'acknowledged' ? '✓ Faculty Signed & Acknowledged' : '○ Pending Acknowledgment'];
+    [5, 6, 7].forEach(r => { coverSheet.getRow(r).eachCell(cell => { cell.border = borderStyle; }); });
+    
+    coverSheet.getRow(9).values = ['Faculty Information', ''];
     coverSheet.getRow(4).font = { bold: true, size: 11, color: { argb: 'FF002366' } };
     coverSheet.getRow(5).values = ['Faculty Name', faculty.name];
     coverSheet.getRow(6).values = ['Department', faculty.department];
