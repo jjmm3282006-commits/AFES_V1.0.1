@@ -181,28 +181,26 @@ function generateSeedEvaluations(): Evaluation[] {
     evals.push({ id: uuidv4(), facultyId: 'F003', courseId: FACULTY_SEED[2].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 5) % feedbacks.length], submittedAt: new Date(2026, 2, 10 + i).toISOString() });
   }
 
-  // F004 - Dr. Robert Kim - Below threshold (7 subs, avg ~4.2)
-  // Good performer but not enough submissions
+  // F004 - Dr. Robert Kim - Good performer (10 subs, avg ~4.2)
   const f004BaseRatings: Record<string, number> = {
     'sq-teaching-1': 4, 'sq-teaching-2': 5, 'sq-teaching-3': 4,
     'sq-mastery-1': 5, 'sq-mastery-2': 4, 'sq-mastery-3': 5,
     'sq-punctuality-1': 4, 'sq-punctuality-2': 4, 'sq-punctuality-3': 5,
     'sq-professionalism-1': 4, 'sq-professionalism-2': 4, 'sq-professionalism-3': 4,
   };
-  for (let i = 0; i < 7; i++) {
+  for (let i = 0; i < 10; i++) {
     const ratings = createDeterministicRatings(f004BaseRatings);
     evals.push({ id: uuidv4(), facultyId: 'F004', courseId: 'MATH301', cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 7) % feedbacks.length], submittedAt: new Date(2026, 2, 12 + i).toISOString() });
   }
 
-  // F005 - Dr. Emily Thompson - Below threshold with professionalism issues (5 subs, avg ~3.0)
-  // Good overall but poor professionalism
+  // F005 - Dr. Emily Thompson - Professionalism issues (10 subs, avg ~3.0)
   const f005BaseRatings: Record<string, number> = {
     'sq-teaching-1': 4, 'sq-teaching-2': 3, 'sq-teaching-3': 4,
     'sq-mastery-1': 3, 'sq-mastery-2': 3, 'sq-mastery-3': 3,
     'sq-punctuality-1': 3, 'sq-punctuality-2': 3, 'sq-punctuality-3': 3,
     'sq-professionalism-1': 2, 'sq-professionalism-2': 2, 'sq-professionalism-3': 1, // Very low professionalism
   };
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 10; i++) {
     const ratings = createDeterministicRatings(f005BaseRatings);
     evals.push({ id: uuidv4(), facultyId: 'F005', courseId: FACULTY_SEED[4].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 9) % feedbacks.length], submittedAt: new Date(2026, 2, 15 + i).toISOString() });
   }
@@ -232,16 +230,54 @@ function generateSeedEvaluations(): Evaluation[] {
     evals.push({ id: uuidv4(), facultyId: 'F007', courseId: FACULTY_SEED[6].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 1) % feedbacks.length], submittedAt: new Date(2026, 2, 10 + i).toISOString() });
   }
 
-  // F008 - Dr. David Martinez - Below threshold (6 subs, avg ~3.8)
+  // F008 - Dr. David Martinez - Good performer (10 subs, avg ~3.8)
   const f008BaseRatings: Record<string, number> = {
     'sq-teaching-1': 4, 'sq-teaching-2': 4, 'sq-teaching-3': 3,
     'sq-mastery-1': 4, 'sq-mastery-2': 4, 'sq-mastery-3': 4,
     'sq-punctuality-1': 4, 'sq-punctuality-2': 3, 'sq-punctuality-3': 4,
     'sq-professionalism-1': 4, 'sq-professionalism-2': 4, 'sq-professionalism-3': 4,
   };
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 10; i++) {
     const ratings = createDeterministicRatings(f008BaseRatings);
     evals.push({ id: uuidv4(), facultyId: 'F008', courseId: 'PHYS201', cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 4) % feedbacks.length], submittedAt: new Date(2026, 2, 14 + i).toISOString() });
+  }
+
+  // F009 - Dr. Jennifer Lee - Excellent performer (12 subs, avg ~4.7)
+  const f009BaseRatings: Record<string, number> = {
+    'sq-teaching-1': 5, 'sq-teaching-2': 5, 'sq-teaching-3': 5,
+    'sq-mastery-1': 5, 'sq-mastery-2': 4, 'sq-mastery-3': 5,
+    'sq-punctuality-1': 5, 'sq-punctuality-2': 5, 'sq-punctuality-3': 4,
+    'sq-professionalism-1': 5, 'sq-professionalism-2': 5, 'sq-professionalism-3': 5,
+  };
+  for (let i = 0; i < 12; i++) {
+    const ratings = createDeterministicRatings(f009BaseRatings);
+    if (i % 5 === 0) { ratings['sq-mastery-2'] = 4; ratings['sq-punctuality-3'] = 4; }
+    evals.push({ id: uuidv4(), facultyId: 'F009', courseId: 'CS101', cycleId: 'cyc-001', ratings, feedback: feedbacks[i % feedbacks.length], submittedAt: new Date(2026, 2, 6 + i).toISOString() });
+  }
+
+  // F010 - Dr. Thomas Wright - Mid performer (11 subs, avg ~3.6)
+  const f010BaseRatings: Record<string, number> = {
+    'sq-teaching-1': 4, 'sq-teaching-2': 3, 'sq-teaching-3': 4,
+    'sq-mastery-1': 4, 'sq-mastery-2': 4, 'sq-mastery-3': 3,
+    'sq-punctuality-1': 3, 'sq-punctuality-2': 4, 'sq-punctuality-3': 3,
+    'sq-professionalism-1': 4, 'sq-professionalism-2': 4, 'sq-professionalism-3': 4,
+  };
+  for (let i = 0; i < 11; i++) {
+    const ratings = createDeterministicRatings(f010BaseRatings);
+    evals.push({ id: uuidv4(), facultyId: 'F010', courseId: FACULTY_SEED[9].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 2) % feedbacks.length], submittedAt: new Date(2026, 2, 11 + i).toISOString() });
+  }
+
+  // F011 - Dr. Amanda Clark - High performer (13 subs, avg ~4.4)
+  const f011BaseRatings: Record<string, number> = {
+    'sq-teaching-1': 5, 'sq-teaching-2': 4, 'sq-teaching-3': 5,
+    'sq-mastery-1': 5, 'sq-mastery-2': 5, 'sq-mastery-3': 4,
+    'sq-punctuality-1': 4, 'sq-punctuality-2': 5, 'sq-punctuality-3': 4,
+    'sq-professionalism-1': 5, 'sq-professionalism-2': 4, 'sq-professionalism-3': 5,
+  };
+  for (let i = 0; i < 13; i++) {
+    const ratings = createDeterministicRatings(f011BaseRatings);
+    if (i % 4 === 0) { ratings['sq-punctuality-1'] = 3; ratings['sq-professionalism-2'] = 4; }
+    evals.push({ id: uuidv4(), facultyId: 'F011', courseId: FACULTY_SEED[10].courses[i % 2], cycleId: 'cyc-001', ratings, feedback: feedbacks[(i + 1) % feedbacks.length], submittedAt: new Date(2026, 2, 9 + i).toISOString() });
   }
 
   // Completed cycle (cyc-003) - 12 evaluations
