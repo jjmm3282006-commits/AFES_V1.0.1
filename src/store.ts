@@ -36,6 +36,9 @@ const FACULTY_SEED: Faculty[] = [
   { id: 'F006', name: 'Dr. Michael Brown', department: 'Computer Science', title: 'Assistant Professor', courses: ['CS150', 'CS250'], acknowledgmentStatus: 'acknowledged', acknowledgedAt: '2026-03-12T09:15:00Z', acknowledgedBy: 'F006' },
   { id: 'F007', name: 'Dr. Lisa Anderson', department: 'Mathematics', title: 'Associate Professor', courses: ['MATH150', 'MATH250'], acknowledgmentStatus: 'pending_acknowledgment' },
   { id: 'F008', name: 'Dr. David Martinez', department: 'Physics', title: 'Assistant Professor', courses: ['PHYS201'], acknowledgmentStatus: 'pending_review' },
+  { id: 'F009', name: 'Dr. Jennifer Lee', department: 'Computer Science', title: 'Lecturer', courses: ['CS101'], acknowledgmentStatus: 'acknowledged', acknowledgedAt: '2026-03-15T10:00:00Z', acknowledgedBy: 'F009' },
+  { id: 'F010', name: 'Dr. Thomas Wright', department: 'Mathematics', title: 'Professor', courses: ['MATH301', 'MATH401'], acknowledgmentStatus: 'pending_review' },
+  { id: 'F011', name: 'Dr. Amanda Clark', department: 'Physics', title: 'Associate Professor', courses: ['PHYS101', 'PHYS201'], acknowledgmentStatus: 'acknowledged', acknowledgedAt: '2026-03-14T16:20:00Z', acknowledgedBy: 'F011' },
 ];
 
 const PROGRAMS_SEED: Program[] = [
@@ -60,6 +63,7 @@ const SUBJECTS_SEED: Subject[] = [
   { id: 'MATH201', code: 'MATH201', name: 'Calculus II', programId: 'BSMATH', facultyId: 'F003' },
   { id: 'MATH250', code: 'MATH250', name: 'Linear Algebra', programId: 'BSMATH', facultyId: 'F007' },
   { id: 'MATH301', code: 'MATH301', name: 'Differential Equations', programId: 'BSMATH', facultyId: 'F004' },
+  { id: 'MATH401', code: 'MATH401', name: 'Advanced Calculus', programId: 'BSMATH', facultyId: 'F010' },
   
   // Physics subjects
   { id: 'PHYS101', code: 'PHYS101', name: 'General Physics I', programId: 'BSPHYS', facultyId: 'F005' },
@@ -75,11 +79,23 @@ const STUDENTS_SEED: Student[] = [
   { id: 'C24-005', name: 'Emma Wilson', programId: 'BSCS', enrolledSubjects: ['CS101', 'CS301', 'PHYS101'] },
   { id: 'C24-006', name: 'Frank Brown', programId: 'BSCS', enrolledSubjects: ['CS401', 'MATH101', 'PHYS101'] },
   { id: 'C24-007', name: 'Grace Taylor', programId: 'BSMATH', enrolledSubjects: ['MATH150', 'MATH201', 'PHYS101'] },
-  { id: 'C24-008', name: 'Henry Martinez', programId: 'BSMATH', enrolledSubjects: ['MATH201', 'MATH250', 'MATH301'] },
+  { id: 'C24-008', name: 'Henry Martinez', programId: 'BSMATH', enrolledSubjects: ['MATH201', 'MATH250', 'MATH401'] },
   { id: 'C24-009', name: 'Ivy Anderson', programId: 'BSMATH', enrolledSubjects: ['MATH101', 'MATH201', 'PHYS101'] },
   { id: 'C24-010', name: 'Jack Thomas', programId: 'BSPHYS', enrolledSubjects: ['PHYS101', 'PHYS201', 'MATH301'] },
   { id: 'C24-011', name: 'Karen White', programId: 'BSPHYS', enrolledSubjects: ['PHYS101', 'PHYS301', 'MATH201'] },
   { id: 'C24-012', name: 'Laura Palmer', programId: 'BSPHYS', enrolledSubjects: ['PHYS201', 'PHYS301', 'MATH101'] },
+  { id: 'C24-013', name: 'Michael Chen', programId: 'BSCS', enrolledSubjects: ['CS101', 'CS201', 'CS301'] },
+  { id: 'C24-014', name: 'Sophia Rodriguez', programId: 'BSCS', enrolledSubjects: ['CS150', 'CS250', 'MATH150'] },
+  { id: 'C24-015', name: 'Daniel Kim', programId: 'BSMATH', enrolledSubjects: ['MATH101', 'MATH201', 'MATH401'] },
+  { id: 'C24-016', name: 'Olivia Patel', programId: 'BSMATH', enrolledSubjects: ['MATH150', 'MATH250', 'MATH401'] },
+  { id: 'C24-017', name: 'Ethan Nguyen', programId: 'BSPHYS', enrolledSubjects: ['PHYS101', 'PHYS201', 'PHYS301'] },
+  { id: 'C24-018', name: 'Ava Williams', programId: 'BSCS', enrolledSubjects: ['CS201', 'CS350', 'CS401'] },
+  { id: 'C24-019', name: 'Noah Garcia', programId: 'BSMATH', enrolledSubjects: ['MATH201', 'MATH301', 'MATH401'] },
+  { id: 'C24-020', name: 'Isabella Lopez', programId: 'BSPHYS', enrolledSubjects: ['PHYS101', 'PHYS201', 'MATH201'] },
+  { id: 'C24-021', name: 'Liam Johnson', programId: 'BSCS', enrolledSubjects: ['CS101', 'CS150', 'CS201'] },
+  { id: 'C24-022', name: 'Mia Thompson', programId: 'BSMATH', enrolledSubjects: ['MATH101', 'MATH150', 'MATH201'] },
+  { id: 'C24-023', name: 'James Wilson', programId: 'BSPHYS', enrolledSubjects: ['PHYS201', 'PHYS301', 'MATH301'] },
+  { id: 'C24-024', name: 'Charlotte Davis', programId: 'BSCS', enrolledSubjects: ['CS250', 'CS301', 'CS350'] },
 ];
 
 const DEANS_SEED: Dean[] = [
@@ -320,6 +336,9 @@ class DataStore {
   private users: User[] = [
     { id: 'admin', username: 'admin', password: 'admin', role: 'admin', displayName: 'System Administrator' },
     { id: 'faculty', username: 'faculty', password: 'faculty', role: 'faculty', displayName: 'Dr. Sarah Chen', facultyId: 'F001', department: 'Computer Science' },
+    { id: 'faculty2', username: 'faculty2', password: 'faculty2', role: 'faculty', displayName: 'Dr. Jennifer Lee', facultyId: 'F009', department: 'Computer Science' },
+    { id: 'faculty3', username: 'faculty3', password: 'faculty3', role: 'faculty', displayName: 'Dr. Thomas Wright', facultyId: 'F010', department: 'Mathematics' },
+    { id: 'faculty4', username: 'faculty4', password: 'faculty4', role: 'faculty', displayName: 'Dr. Amanda Clark', facultyId: 'F011', department: 'Physics' },
     { id: 'dean_cs', username: 'M001', password: 'dean123', role: 'dean', displayName: 'Dr. Patricia Moore', department: 'Computer Science' },
     { id: 'dean_math', username: 'M002', password: 'dean123', role: 'dean', displayName: 'Dr. William Chang', department: 'Mathematics' },
     { id: 'dean_phys', username: 'M003', password: 'dean123', role: 'dean', displayName: 'Dr. Elizabeth Brown', department: 'Physics' },
@@ -344,7 +363,7 @@ class DataStore {
       
       // Demo: Reset some faculty acknowledgment statuses on refresh
       // This allows users to see the full acknowledgment workflow
-      const facultyToReset = ['F002', 'F006']; // Reset these faculty to pending_acknowledgment
+      const facultyToReset = ['F002', 'F006', 'F009']; // Reset these faculty to pending_acknowledgment
       facultyToReset.forEach(facultyId => {
         const faculty = this.faculty.find(f => f.id === facultyId);
         if (faculty && faculty.acknowledgmentStatus === 'acknowledged') {

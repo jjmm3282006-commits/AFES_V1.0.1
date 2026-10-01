@@ -55,8 +55,66 @@ export default function Login() {
             </button>
           </form>
           <div className="mt-6 pt-4 border-t" style={{ borderColor: '#D5D8DC' }}>
-            <p className="text-xs font-medium mb-2" style={{ color: '#B87333' }}>Demo Credentials:</p>
-            <div className="grid grid-cols-2 gap-1 text-xs"><span>Admin: admin / admin</span><span>Faculty: faculty / faculty</span><span>Student: C24-001 / pass123</span><span>Dean: M001 / dean123</span></div>
+            <label className="block text-xs font-medium mb-2" style={{ color: '#B87333' }}>Quick Login (Demo Accounts):</label>
+            <select 
+              onChange={(e) => {
+                const [username, password] = e.target.value.split('|');
+                if (username && password) {
+                  setUsername(username);
+                  setPassword(password);
+                }
+              }}
+              className="w-full px-3 py-2 rounded-lg border text-xs outline-none mb-3"
+              style={{ backgroundColor: '#F8F6F1', borderColor: '#D5D8DC' }}
+              defaultValue=""
+            >
+              <option value="" disabled>Select an account...</option>
+              <optgroup label="Admin">
+                <option value="admin|admin">System Administrator (admin / admin)</option>
+              </optgroup>
+              <optgroup label="Faculty">
+                <option value="faculty|faculty">Dr. Sarah Chen - CS (faculty / faculty)</option>
+                <option value="faculty2|faculty2">Dr. Jennifer Lee - CS (faculty2 / faculty2) ⚡ Resets on refresh</option>
+                <option value="faculty3|faculty3">Dr. Thomas Wright - Math (faculty3 / faculty3)</option>
+                <option value="faculty4|faculty4">Dr. Amanda Clark - Physics (faculty4 / faculty4)</option>
+              </optgroup>
+              <optgroup label="Deans">
+                <option value="M001|dean123">Dr. Patricia Moore - CS Dean (M001 / dean123)</option>
+                <option value="M002|dean123">Dr. William Chang - Math Dean (M002 / dean123)</option>
+                <option value="M003|dean123">Dr. Elizabeth Brown - Physics Dean (M003 / dean123)</option>
+              </optgroup>
+              <optgroup label="Students - BS Computer Science">
+                <option value="C24-001|pass123">Alice Johnson (C24-001 / pass123)</option>
+                <option value="C24-002|pass123">Bob Smith (C24-002 / pass123)</option>
+                <option value="C24-003|pass123">Carol Davis (C24-003 / pass123)</option>
+                <option value="C24-004|pass123">David Lee (C24-004 / pass123)</option>
+                <option value="C24-005|pass123">Emma Wilson (C24-005 / pass123)</option>
+                <option value="C24-006|pass123">Frank Brown (C24-006 / pass123)</option>
+                <option value="C24-013|pass123">Michael Chen (C24-013 / pass123)</option>
+                <option value="C24-014|pass123">Sophia Rodriguez (C24-014 / pass123)</option>
+                <option value="C24-018|pass123">Ava Williams (C24-018 / pass123)</option>
+                <option value="C24-021|pass123">Liam Johnson (C24-021 / pass123)</option>
+                <option value="C24-024|pass123">Charlotte Davis (C24-024 / pass123)</option>
+              </optgroup>
+              <optgroup label="Students - BS Mathematics">
+                <option value="C24-007|pass123">Grace Taylor (C24-007 / pass123)</option>
+                <option value="C24-008|pass123">Henry Martinez (C24-008 / pass123)</option>
+                <option value="C24-009|pass123">Ivy Anderson (C24-009 / pass123)</option>
+                <option value="C24-015|pass123">Daniel Kim (C24-015 / pass123)</option>
+                <option value="C24-016|pass123">Olivia Patel (C24-016 / pass123)</option>
+                <option value="C24-019|pass123">Noah Garcia (C24-019 / pass123)</option>
+                <option value="C24-022|pass123">Mia Thompson (C24-022 / pass123)</option>
+              </optgroup>
+              <optgroup label="Students - BS Physics">
+                <option value="C24-010|pass123">Jack Thomas (C24-010 / pass123)</option>
+                <option value="C24-011|pass123">Karen White (C24-011 / pass123)</option>
+                <option value="C24-012|pass123">Laura Palmer (C24-012 / pass123)</option>
+                <option value="C24-017|pass123">Ethan Nguyen (C24-017 / pass123)</option>
+                <option value="C24-020|pass123">Isabella Lopez (C24-020 / pass123)</option>
+                <option value="C24-023|pass123">James Wilson (C24-023 / pass123)</option>
+              </optgroup>
+            </select>
+            <p className="text-[10px] text-center" style={{ color: '#9CA3AF' }}>Select an account to auto-fill credentials, then click Sign In</p>
           </div>
         </div>
       </div>
