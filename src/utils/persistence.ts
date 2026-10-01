@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'afes_data';
-const STORAGE_VERSION = '2.0.0';
+const STORAGE_VERSION = '3.0.0'; // Bumped to invalidate old data without new evaluations
 
 export function saveToLocalStorage(inputData: any): boolean {
   try {
