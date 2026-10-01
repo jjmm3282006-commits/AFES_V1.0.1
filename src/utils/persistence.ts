@@ -3,7 +3,7 @@ const STORAGE_VERSION = '2.0.0';
 
 export function saveToLocalStorage( any): boolean {
   try {
-    const persistedData = { version: STORAGE_VERSION, timestamp: new Date().toISOString(), data: data };
+    const persistedData = { version: STORAGE_VERSION, timestamp: new Date().toISOString(), data: inputData };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(persistedData));
     return true;
   } catch (error) {
