@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'afes_data';
-const STORAGE_VERSION = '3.0.0'; // Bumped to invalidate old data without new evaluations
+const STORAGE_VERSION = '4.0.0'; // Bumped to reset all faculty to pending_review status
 
 export function saveToLocalStorage(inputData: any): boolean {
   try {

@@ -21,17 +21,17 @@ const SUB_QUESTIONS: SubQuestion[] = [
 ];
 
 const FACULTY_SEED: Faculty[] = [
-  { id: 'F001', name: 'Dr. Sarah Chen', department: 'Computer Science', title: 'Associate Professor', courses: ['CS101', 'CS201', 'CS301'], acknowledgmentStatus: 'acknowledged', acknowledgedAt: '2026-03-10T14:30:00Z', acknowledgedBy: 'F001' },
-  { id: 'F002', name: 'Dr. James Wilson', department: 'Computer Science', title: 'Professor', courses: ['CS401', 'CS350'], acknowledgmentStatus: 'pending_acknowledgment' },
+  { id: 'F001', name: 'Dr. Sarah Chen', department: 'Computer Science', title: 'Associate Professor', courses: ['CS101', 'CS201', 'CS301'], acknowledgmentStatus: 'pending_review' },
+  { id: 'F002', name: 'Dr. James Wilson', department: 'Computer Science', title: 'Professor', courses: ['CS401', 'CS350'], acknowledgmentStatus: 'pending_review' },
   { id: 'F003', name: 'Dr. Maria Garcia', department: 'Mathematics', title: 'Assistant Professor', courses: ['MATH101', 'MATH201'], acknowledgmentStatus: 'pending_review' },
   { id: 'F004', name: 'Dr. Robert Kim', department: 'Mathematics', title: 'Professor', courses: ['MATH301'], acknowledgmentStatus: 'pending_review' },
-  { id: 'F005', name: 'Dr. Emily Thompson', department: 'Physics', title: 'Associate Professor', courses: ['PHYS101', 'PHYS301'], acknowledgmentStatus: 'pending_acknowledgment' },
-  { id: 'F006', name: 'Dr. Michael Brown', department: 'Computer Science', title: 'Assistant Professor', courses: ['CS150', 'CS250'], acknowledgmentStatus: 'acknowledged', acknowledgedAt: '2026-03-12T09:15:00Z', acknowledgedBy: 'F006' },
-  { id: 'F007', name: 'Dr. Lisa Anderson', department: 'Mathematics', title: 'Associate Professor', courses: ['MATH150', 'MATH250'], acknowledgmentStatus: 'pending_acknowledgment' },
+  { id: 'F005', name: 'Dr. Emily Thompson', department: 'Physics', title: 'Associate Professor', courses: ['PHYS101', 'PHYS301'], acknowledgmentStatus: 'pending_review' },
+  { id: 'F006', name: 'Dr. Michael Brown', department: 'Computer Science', title: 'Assistant Professor', courses: ['CS150', 'CS250'], acknowledgmentStatus: 'pending_review' },
+  { id: 'F007', name: 'Dr. Lisa Anderson', department: 'Mathematics', title: 'Associate Professor', courses: ['MATH150', 'MATH250'], acknowledgmentStatus: 'pending_review' },
   { id: 'F008', name: 'Dr. David Martinez', department: 'Physics', title: 'Assistant Professor', courses: ['PHYS201'], acknowledgmentStatus: 'pending_review' },
-  { id: 'F009', name: 'Dr. Jennifer Lee', department: 'Computer Science', title: 'Lecturer', courses: ['CS101'], acknowledgmentStatus: 'acknowledged', acknowledgedAt: '2026-03-15T10:00:00Z', acknowledgedBy: 'F009' },
+  { id: 'F009', name: 'Dr. Jennifer Lee', department: 'Computer Science', title: 'Lecturer', courses: ['CS101'], acknowledgmentStatus: 'pending_review' },
   { id: 'F010', name: 'Dr. Thomas Wright', department: 'Mathematics', title: 'Professor', courses: ['MATH301', 'MATH401'], acknowledgmentStatus: 'pending_review' },
-  { id: 'F011', name: 'Dr. Amanda Clark', department: 'Physics', title: 'Associate Professor', courses: ['PHYS101', 'PHYS201'], acknowledgmentStatus: 'acknowledged', acknowledgedAt: '2026-03-14T16:20:00Z', acknowledgedBy: 'F011' },
+  { id: 'F011', name: 'Dr. Amanda Clark', department: 'Physics', title: 'Associate Professor', courses: ['PHYS101', 'PHYS201'], acknowledgmentStatus: 'pending_review' },
 ];
 
 const PROGRAMS_SEED: Program[] = [
