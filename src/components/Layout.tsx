@@ -100,7 +100,7 @@ export default function Layout({ children, viewingCycleId, onViewingCycleChange 
               <div><h1 className="text-white font-bold text-base leading-tight">AFES</h1><p className="text-[10px] leading-tight" style={{ color: '#B87333' }}>Faculty Evaluation System</p></div>
             </div>
             {activeCycle && (
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: 'rgba(46,139,87,0.2)', border: '1px solid rgba(46,139,87,0.5)' }}>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: 'rgba(46,139,87,0.2)', border: '1px solid rgba(46,139,87,0.5)' }}>
                 <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
                 <span className="text-xs font-bold text-green-300">CURRENT ACTIVE PERIOD:</span>
                 <span className="text-xs font-semibold text-white">{activeCycle.displayName}</span>
@@ -115,7 +115,7 @@ export default function Layout({ children, viewingCycleId, onViewingCycleChange 
             </div>
           </div>
         </div>
-        {activeCycle && <div className="md:hidden px-4 pb-2 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /><span className="text-[10px] font-bold text-green-300">ACTIVE:</span><span className="text-[10px] font-semibold text-white">{activeCycle.displayName}</span></div>}
+
       </nav>
       {onViewingCycleChange && cycles.length > 0 && (
         <div className="sticky top-14 z-40 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
