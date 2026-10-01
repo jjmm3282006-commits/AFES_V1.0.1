@@ -516,6 +516,7 @@ class DataStore {
   }
 
   getPrograms(): Program[] { return [...this.programs]; }
+  getSubjects(): Subject[] { return [...this.subjects]; }
   getSubjectsByProgram(programId: string): Subject[] { return this.subjects.filter(s => s.programId === programId); }
   getSubjectById(subjectId: string): Subject | undefined { return this.subjects.find(s => s.id === subjectId); }
   getFacultyBySubject(subjectId: string): Faculty | undefined {
@@ -639,6 +640,179 @@ class DataStore {
   getStudents(): Student[] { return [...this.students]; }
   getStudentById(id: string): Student | undefined { return this.students.find(s => s.id === id); }
   getDeans(): Dean[] { return [...this.deans]; }
+
+  // Account Creation Methods
+  async createFacultyAccount(
+    name: string,
+    department: string,
+    title: string,
+    courses: string[],
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; message: string; facultyId?: string }> {
+    await this.simulateLatency();
+    
+    // Check if username already exists
+    if (this.users.find(u => u.username === username)) {
+      return { success: false, message: 'Username already exists' };
+    }
+
+    // Generate new faculty ID
+    const facultyId = `F${String(this.faculty.length + 1).padStart(3, '0')}`;
+    
+    // Create faculty record
+    const newFaculty: Faculty = {
+      id: facultyId,
+      name,
+      department,
+      title,
+      courses,
+      acknowledgmentStatus: 'pending_review'
+    };
+    
+    this.faculty.push(newFaculty);
+    
+    // Create user account
+    const newUser: User = {
+      id: username,
+      username,
+      password,
+      role: 'faculty',
+      displayName: name,
+      facultyId,
+      department
+    };
+    
+    this.users.push(newUser);
+    
+    this.addAuditLog('admin', 'faculty_created', facultyId, `Created faculty account: ${name} (${username})`);
+    this.persistData();
+    this.emit('data_refresh');
+    
+    return { success: true, message: 'Faculty account created successfully', facultyId };
+  }
+
+  async createStudentAccount(
+    name: string,
+    studentId: string,
+    programId: string,
+    enrolledSubjects: string[],
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; message: string }> {
+    await this.simulateLatency();
+    
+    // Check if username already exists
+    if (this.users.find(u => u.username === username)) {
+      return { success: false, message: 'Username already exists' };
+    }
+
+    // Check if student ID already exists
+    if (this.students.find(s => s.id === studentId)) {
+      return { success: false, message: 'Student ID already exists' };
+    }
+    
+    // Create student record
+    const newStudent: Student = {
+      id: studentId,
+      name,
+      programId,
+      enrolledSubjects
+    };
+    
+    this.students.push(newStudent);
+    
+    // Create user account
+    const newUser: User = {
+      id: username,
+      username,
+      password,
+      role: 'student',
+      displayName: name
+    };
+    
+    this.users.push(newUser);
+    
+    this.addAuditLog('admin', 'student_created', studentId, `Created student account: ${name} (${username})`);
+    this.persistData();
+    this.emit('data_refresh');
+    
+    return { success: true, message: 'Student account created successfully' };
+  }
+
+  async createDeanAccount(
+    name: string,
+    department: string,
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; message: string; deanId?: string }> {
+    await this.simulateLatency();
+    
+    // Check if username already exists
+    if (this.users.find(u => u.username === username)) {
+      return { success: false, message: 'Username already exists' };
+    }
+
+    // Generate new dean ID
+    const deanId = `M${String(this.deans.length + 1).padStart(3, '0')}`;
+    
+    // Create dean record
+    const newDean: Dean = {
+      id: deanId,
+      name,
+      department
+    };
+    
+    this.deans.push(newDean);
+    
+    // Create user account
+    const newUser: User = {
+      id: username,
+      username,
+      password,
+      role: 'dean',
+      displayName: name,
+      department
+    };
+    
+    this.users.push(newUser);
+    
+    this.addAuditLog('admin', 'dean_created', deanId, `Created dean account: ${name} (${username})`);
+    this.persistData();
+    this.emit('data_refresh');
+    
+    return { success: true, message: 'Dean account created successfully', deanId };
+  }
+
+  async createAdminAccount(
+    name: string,
+    username: string,
+    password: string
+  ): Promise<{ success: boolean; message: string }> {
+    await this.simulateLatency();
+    
+    // Check if username already exists
+    if (this.users.find(u => u.username === username)) {
+      return { success: false, message: 'Username already exists' };
+    }
+    
+    // Create user account
+    const newUser: User = {
+      id: username,
+      username,
+      password,
+      role: 'admin',
+      displayName: name
+    };
+    
+    this.users.push(newUser);
+    
+    this.addAuditLog('admin', 'admin_created', username, `Created admin account: ${name} (${username})`);
+    this.persistData();
+    this.emit('data_refresh');
+    
+    return { success: true, message: 'Admin account created successfully' };
+  }
 
   resetData(): void {
     this.faculty = JSON.parse(JSON.stringify(FACULTY_SEED));

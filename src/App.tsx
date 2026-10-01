@@ -7,6 +7,7 @@ import StudentDashboard from './pages/StudentDashboard';
 import FacultyDashboard from './pages/FacultyDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import DeanDashboard from './pages/DeanDashboard';
+import AccountCreation from './pages/AccountCreation';
 import type { UserRole } from './types';
 
 function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: UserRole[] }) {
@@ -33,6 +34,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/" element={<ProtectedRoute allowedRoles={['admin', 'faculty', 'student', 'dean']}><DashboardRouter /></ProtectedRoute>} />
+      <Route path="/create-account" element={<ProtectedRoute allowedRoles={['admin']}><AccountCreation /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
