@@ -1,7 +1,7 @@
 // Data persistence utilities for localStorage
 
 const STORAGE_KEY = 'afes_data';
-const STORAGE_VERSION = '1.0.0';
+const STORAGE_VERSION = '2.0.0'; // Bumped version to force reset with new criteria structure
 
 export interface PersistedData {
   version: string;
