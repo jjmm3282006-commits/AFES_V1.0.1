@@ -123,22 +123,22 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
-              <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Completion by Department</h3>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: '#002366' }}>Completion by Program</h3>
               <div className="space-y-3">
-                {['Computer Science', 'Mathematics', 'Physics'].map(dept => {
-                  const deptFaculty = faculty.filter(f => f.department === dept);
-                  const totalSubs = deptFaculty.reduce((sum, f) => sum + store.getFacultyMetrics(f.id, cycleId).totalSubmissions, 0);
-                  const completionRate = deptFaculty.length > 0 ? Math.round((totalSubs / (deptFaculty.length * 10)) * 100) : 0;
+                {store.getPrograms().map(program => {
+                  const programFaculty = faculty.filter(f => f.department === program.department);
+                  const totalSubs = programFaculty.reduce((sum, f) => sum + store.getFacultyMetrics(f.id, cycleId).totalSubmissions, 0);
+                  const completionRate = programFaculty.length > 0 ? Math.round((totalSubs / (programFaculty.length * 10)) * 100) : 0;
                   return (
-                    <div key={dept} className="p-3 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
+                    <div key={program.id} className="p-3 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{dept}</span>
+                        <span className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{program.name}</span>
                         <span className="text-sm font-bold" style={{ color: completionRate >= 80 ? '#2E8B57' : completionRate >= 50 ? '#B87333' : '#C41E3A' }}>{completionRate}%</span>
                       </div>
                       <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#D5D8DC' }}>
                         <div className="h-full rounded-full" style={{ width: `${completionRate}%`, backgroundColor: completionRate >= 80 ? '#2E8B57' : completionRate >= 50 ? '#B87333' : '#C41E3A' }} />
                       </div>
-                      <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{totalSubs} submissions from {deptFaculty.length} faculty</p>
+                      <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{totalSubs} submissions from {programFaculty.length} faculty</p>
                     </div>
                   );
                 })}

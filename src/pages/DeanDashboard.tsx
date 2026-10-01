@@ -240,15 +240,15 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="rounded-xl p-5 shadow-sm" style={{ backgroundColor: '#EDEBE8' }}>
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><Users size={16} style={{ color: '#B87333' }} />Department Completion Rates</h3>
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><Users size={16} style={{ color: '#B87333' }} />Program Completion Rates</h3>
           <div className="space-y-3">
-            {departments.map(dept => {
-              const m = store.getDepartmentMetrics(dept, cycleId);
+            {store.getPrograms().map(program => {
+              const m = store.getDepartmentMetrics(program.department, cycleId);
               const completionRate = m.totalFaculty > 0 ? Math.round((m.totalSubmissions / (m.totalFaculty * 10)) * 100) : 0;
               return (
-                <div key={dept} className="p-3 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
+                <div key={program.id} className="p-3 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{dept}</span>
+                    <span className="text-sm font-medium" style={{ color: '#1A1A1A' }}>{program.name}</span>
                     <span className="text-sm font-bold" style={{ color: completionRate >= 80 ? '#2E8B57' : completionRate >= 50 ? '#B87333' : '#C41E3A' }}>{completionRate}%</span>
                   </div>
                   <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#D5D8DC' }}>
