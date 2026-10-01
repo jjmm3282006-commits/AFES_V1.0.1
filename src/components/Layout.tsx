@@ -99,13 +99,7 @@ export default function Layout({ children, viewingCycleId, onViewingCycleChange 
               </div>
               <div><h1 className="text-white font-bold text-base leading-tight">AFES</h1><p className="text-[10px] leading-tight" style={{ color: '#B87333' }}>Faculty Evaluation System</p></div>
             </div>
-            {activeCycle && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: 'rgba(46,139,87,0.2)', border: '1px solid rgba(46,139,87,0.5)' }}>
-                <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-xs font-bold text-green-300">CURRENT ACTIVE PERIOD:</span>
-                <span className="text-xs font-semibold text-white">{activeCycle.displayName}</span>
-              </div>
-            )}
+
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: badge.bg, color: badge.text }}>{getRoleIcon()}<span className="capitalize hidden sm:inline">{user?.role}</span></div>
