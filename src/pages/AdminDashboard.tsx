@@ -128,7 +128,8 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
                 {store.getPrograms().map(program => {
                   const programFaculty = faculty.filter(f => f.department === program.department);
                   const totalSubs = programFaculty.reduce((sum, f) => sum + store.getFacultyMetrics(f.id, cycleId).totalSubmissions, 0);
-                  const completionRate = programFaculty.length > 0 ? Math.round((totalSubs / (programFaculty.length * 10)) * 100) : 0;
+                  const facultyWithThreshold = programFaculty.filter(f => store.getFacultyMetrics(f.id, cycleId).totalSubmissions >= THRESHOLD).length;
+                  const completionRate = programFaculty.length > 0 ? Math.round((facultyWithThreshold / programFaculty.length) * 100) : 0;
                   return (
                     <div key={program.id} className="p-3 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
                       <div className="flex items-center justify-between mb-2">
@@ -138,7 +139,7 @@ export default function AdminDashboard({ viewingCycleId }: AdminDashboardProps) 
                       <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#D5D8DC' }}>
                         <div className="h-full rounded-full" style={{ width: `${completionRate}%`, backgroundColor: completionRate >= 80 ? '#2E8B57' : completionRate >= 50 ? '#B87333' : '#C41E3A' }} />
                       </div>
-                      <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{totalSubs} submissions from {programFaculty.length} faculty</p>
+                      <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{facultyWithThreshold}/{programFaculty.length} faculty met threshold ({totalSubs} total submissions)</p>
                     </div>
                   );
                 })}

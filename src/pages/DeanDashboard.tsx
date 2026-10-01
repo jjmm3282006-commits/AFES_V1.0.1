@@ -243,8 +243,10 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#002366' }}><Users size={16} style={{ color: '#B87333' }} />Program Completion Rates</h3>
           <div className="space-y-3">
             {store.getPrograms().map(program => {
-              const m = store.getDepartmentMetrics(program.department, cycleId);
-              const completionRate = m.totalFaculty > 0 ? Math.round((m.totalSubmissions / (m.totalFaculty * 10)) * 100) : 0;
+              const programFaculty = faculty.filter(f => f.department === program.department);
+              const totalSubs = programFaculty.reduce((sum, f) => sum + store.getFacultyMetrics(f.id, cycleId).totalSubmissions, 0);
+              const facultyWithThreshold = programFaculty.filter(f => store.getFacultyMetrics(f.id, cycleId).totalSubmissions >= THRESHOLD).length;
+              const completionRate = programFaculty.length > 0 ? Math.round((facultyWithThreshold / programFaculty.length) * 100) : 0;
               return (
                 <div key={program.id} className="p-3 rounded-lg" style={{ backgroundColor: '#F8F6F1' }}>
                   <div className="flex items-center justify-between mb-2">
@@ -254,7 +256,7 @@ export default function DeanDashboard({ viewingCycleId }: DeanDashboardProps) {
                   <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: '#D5D8DC' }}>
                     <div className="h-full rounded-full" style={{ width: `${completionRate}%`, backgroundColor: completionRate >= 80 ? '#2E8B57' : completionRate >= 50 ? '#B87333' : '#C41E3A' }} />
                   </div>
-                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{m.totalSubmissions} submissions from {m.totalFaculty} faculty</p>
+                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>{facultyWithThreshold}/{programFaculty.length} faculty met threshold ({totalSubs} total submissions)</p>
                 </div>
               );
             })}
