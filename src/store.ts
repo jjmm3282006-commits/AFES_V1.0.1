@@ -273,11 +273,16 @@ class DataStore {
     return faculty ? [...faculty.courses] : [];
   }
 
-  async acknowledgeFaculty(facultyId: string, verifiedBy: string): Promise<void> {
+  async acknowledgeFaculty(facultyId: string, verifiedBy: string, signature?: string): Promise<void> {
     await this.simulateLatency();
     const f = this.faculty.find(fc => fc.id === facultyId);
-    if (f) { f.acknowledgmentStatus = 'acknowledged'; f.acknowledgedAt = new Date().toISOString(); f.acknowledgedBy = verifiedBy; }
-    this.addAuditLog(`faculty:${facultyId}`, 'acknowledgment', facultyId, `Faculty acknowledged report. Verified by: ${verifiedBy}`);
+    if (f) { 
+      f.acknowledgmentStatus = 'acknowledged'; 
+      f.acknowledgedAt = new Date().toISOString(); 
+      f.acknowledgedBy = verifiedBy;
+      if (signature) f.signature = signature;
+    }
+    this.addAuditLog(`faculty:${facultyId}`, 'acknowledgment', facultyId, `Faculty acknowledged report with e-signature. Verified by: ${verifiedBy}`);
     this.persistData();
     this.emit('acknowledgment_changed');
   }

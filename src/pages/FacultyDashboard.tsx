@@ -6,6 +6,7 @@ import type { FacultyMetrics, Criterion, SubQuestion } from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine, PieChart, Pie } from 'recharts';
 import { RefreshCw, Shield, BarChart3, MessageSquare, TrendingUp, BookOpen, ChevronDown, ChevronUp, Award, Printer, CheckCircle, AlertTriangle, Download } from 'lucide-react';
 import FacultyPrintReport from '../components/FacultyPrintReport';
+import SignaturePad from '../components/SignaturePad';
 
 const COLORS = ['#002366', '#B87333', '#C41E3A', '#2E8B57', '#6366F1'];
 const STAR_COLORS = ['#DC2626', '#F59E0B', '#94A3B8', '#3B82F6', '#10B981']; // 1★(Red) 2★(Amber) 3★(Slate) 4★(Blue) 5★(Emerald)
@@ -22,7 +23,7 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
   const [showFeedback, setShowFeedback] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [showSignModal, setShowSignModal] = useState(false);
-  const [signPassword, setSignPassword] = useState('');
+  const [signature, setSignature] = useState<string | null>(null);
   const [pieChartView, setPieChartView] = useState<string>('overall');
   const [showDisputeModal, setShowDisputeModal] = useState(false);
   const [disputeJustification, setDisputeJustification] = useState('');
@@ -48,9 +49,10 @@ export default function FacultyDashboard({ viewingCycleId }: FacultyDashboardPro
   useEffect(() => { loadData(); const unsubs = [store.subscribe('submission_added', loadData), store.subscribe('criteria_changed', loadData), store.subscribe('acknowledgment_changed', loadData), store.subscribe('cycle_changed', loadData)]; return () => unsubs.forEach(u => u()); }, [loadData]);
 
   const handleSignOff = async () => {
-    if (signPassword !== 'faculty') return;
-    await store.acknowledgeFaculty(facultyId, facultyId);
-    setShowSignModal(false); setSignPassword('');
+    if (!signature) return;
+    await store.acknowledgeFaculty(facultyId, facultyId, signature);
+    setShowSignModal(false);
+    setSignature(null);
   };
 
   const handleSubmitDispute = async () => {

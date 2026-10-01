@@ -26,6 +26,7 @@ export interface Faculty {
   acknowledgmentStatus: 'pending_review' | 'pending_acknowledgment' | 'acknowledged' | 'disputed';
   acknowledgedAt?: string;
   acknowledgedBy?: string;
+  signature?: string; // Base64 encoded signature image
   disputeId?: string;
   lastReminderSent?: string;
 }
@@ -64,6 +65,9 @@ export interface EvaluationCycle {
   startDate: string;
   endDate: string;
   status: 'active' | 'upcoming' | 'completed' | 'archived';
+  verificationStatus?: 'pending_verification' | 'verified' | 'released';
+  verifiedAt?: string;
+  verifiedBy?: string;
 }
 
 export interface Criterion {
@@ -96,7 +100,7 @@ export interface RateLimitEntry {
   windowStart: number;
 }
 
-export type EventType = 'criteria_changed' | 'cycle_changed' | 'submission_added' | 'data_refresh' | 'acknowledgment_changed' | 'training_changed' | 'dispute_submitted' | 'dispute_resolved';
+export type EventType = 'criteria_changed' | 'cycle_changed' | 'submission_added' | 'data_refresh' | 'acknowledgment_changed' | 'training_changed' | 'dispute_submitted' | 'dispute_resolved' | 'verification_changed';
 
 export interface FacultyMetrics {
   totalSubmissions: number;
