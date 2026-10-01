@@ -224,18 +224,7 @@ class DataStore {
   }
 
   private persistData(): void {
-    saveToLocalStorage({
-      faculty: this.faculty,
-      students: this.students,
-      deans: this.deans,
-      cycles: this.cycles,
-      criteria: this.criteria,
-      subQuestions: this.subQuestions,
-      evaluations: this.evaluations,
-      auditLog: this.auditLog,
-      trainingRecommendations: this.trainingRecommendations,
-      disputes: this.disputes,
-    });
+    saveToLocalStorage();
   }
 
   subscribe(event: EventType, callback: () => void): () => void {
